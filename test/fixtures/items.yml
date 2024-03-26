@@ -4,16 +4,16 @@ one:
   name: MyString
   description: MyText
   condition: MyString
-  quantity: MyString
-  cost_price: MyString
-  selling_price: MyString
+  quantity: 1
+  cost_price: 1.5
+  selling_price: 1.5
   image: MyString
 
 two:
   name: MyString
   description: MyText
   condition: MyString
-  quantity: MyString
-  cost_price: MyString
-  selling_price: MyString
+  quantity: 1
+  cost_price: 1.5
+  selling_price: 1.5
   image: MyString
