@@ -6,7 +6,7 @@ namespace :import_data do
 
     CSV.foreach(csv_file, headers: true) do |row|
       Item.create!(
-        item_name: row['Name'],
+        name: row['Name'],
         description: row['Name'],
         condition: row['Condition'],
         quantity: row['quantity'],
