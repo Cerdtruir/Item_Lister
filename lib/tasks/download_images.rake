@@ -10,6 +10,8 @@ namespace :images do
       image = MiniMagick::Image.read(downloaded_image)
       image.format 'jpg'
       image.write("public/#{item.id}.jpg")
+      Cloudinary::Uploader.upload("public/#{item.id}.jpg",
+                                  public_id: item.id)
 
     rescue StandardError => e
       puts "Error downloading image from #{item.image}: #{e.message}"

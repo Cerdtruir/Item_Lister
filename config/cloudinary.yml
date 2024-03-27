@@ -1,0 +1,11 @@
+development:
+  cloud_name: 'dwi7jdore'
+  api_key: '263287229481534'
+  api_secret: 'X1xrcgL8ilwV-5HrOGrB29m0z-g'
+  secure: true
+
+production:
+  cloud_name: 'dwi7jdore'
+  api_key: '263287229481534'
+  api_secret: 'X1xrcgL8ilwV-5HrOGrB29m0z-g'
+  secure: true

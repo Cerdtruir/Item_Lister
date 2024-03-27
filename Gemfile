@@ -71,6 +71,7 @@ group :test do
   gem 'webdrivers'
 end
 
+gem 'cloudinary'
 gem 'htmlbeautifier'
 gem 'httparty'
 gem 'mini_magick'
