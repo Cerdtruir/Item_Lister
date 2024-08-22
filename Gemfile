@@ -55,6 +55,7 @@ end
 
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
+  gem 'rails_live_reload'
   gem 'web-console'
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
@@ -72,6 +73,7 @@ group :test do
 end
 
 gem 'cloudinary'
+gem 'csv'
 gem 'htmlbeautifier'
 gem 'httparty'
 gem 'mini_magick'
