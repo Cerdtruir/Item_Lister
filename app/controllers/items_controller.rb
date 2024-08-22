@@ -3,6 +3,10 @@ class ItemsController < ApplicationController
 
   # GET /items or /items.json
   def index
+    @total_items = Item.sum('quantity')
+    @total_cost = Item.sum('cost_price * quantity').round(2)
+    @total_selling = Item.sum('selling_price * quantity').round(2)
+    @total_profit = @total_selling - @total_cost
     @items = Item.all
   end
 
