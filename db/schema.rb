@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_08_13_123830) do
+ActiveRecord::Schema[7.0].define(version: 2024_08_23_100000) do
   create_table "items", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -25,6 +25,8 @@ ActiveRecord::Schema[7.0].define(version: 2024_08_13_123830) do
     t.string "category"
     t.decimal "original_price"
     t.boolean "takealot_condition"
+    t.string "takealot_url"
+    t.string "barcode"
   end
 
 end
