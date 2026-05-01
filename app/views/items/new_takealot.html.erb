@@ -1,0 +1,11 @@
+<div class="mx-auto md:w-2/3 w-full">
+  <h1 class="font-bold text-4xl">Create Item from Takealot Link</h1>
+  <%= form_with(url: create_from_takealot_items_path, method: :post, class: 'my-5') do |form| %>
+    <div class="my-5">
+      <%= form.label :takealot_link, "Takealot Link" %>
+      <%= form.text_field :takealot_link, class: 'block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full', placeholder: 'Enter Takealot Link' %>
+    </div>
+    <%= form.submit 'Create Item', class: 'rounded-lg py-3 px-5 bg-blue-600 text-white inline-block font-medium cursor-pointer' %>
+  <% end %>
+  <%= link_to 'Back to items', items_path, class: 'ml-2 rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium' %>
+</div>

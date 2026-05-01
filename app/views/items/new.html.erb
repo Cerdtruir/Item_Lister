@@ -1,7 +1,9 @@
-<div class="mx-auto md:w-2/3 w-full">
-  <h1 class="font-bold text-4xl">New item</h1>
-
-  <%= render 'form', item: @item %>
-
-  <%= link_to 'Back to items', items_path, class: 'ml-2 rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium' %>
+<div class="detail-page">
+  <h1>New Item</h1>
+  <div class="detail-card">
+    <%= render 'form', item: @item %>
+    <div class="detail-actions">
+      <%= link_to '← All Items', items_path, class: 'btn-secondary-glass btn-sm', style: 'text-decoration:none;text-align:center;' %>
+    </div>
+  </div>
 </div>

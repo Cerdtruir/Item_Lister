@@ -1,17 +1,72 @@
-<div class="mx-auto md:w-2/3 w-full flex">
-  <div class="mx-auto">
-    <% if notice.present? %>
-      <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-lg inline-block" id="notice"><%= notice %></p>
+<div class="detail-page">
+  <h1>Item Details</h1>
+
+  <div class="detail-card">
+    <!-- Image -->
+    <div style="text-align:center;margin-bottom:1.25rem;">
+      <div class="product-image-wrapper" style="max-width:160px;">
+        <img src="/<%= @item.id %>.jpg" alt="<%= @item.name %>" onerror="this.parentElement.style.display='none'">
+      </div>
+    </div>
+
+    <!-- Name -->
+    <h2 style="font-size:1.15rem;font-weight:600;margin:0 0 1rem;line-height:1.4;"><%= @item.name %></h2>
+
+    <!-- Fields grid -->
+    <div class="detail-grid">
+      <div class="detail-field">
+        <span class="field-label">Category</span>
+        <span class="field-value"><%= @item.category || '—' %></span>
+      </div>
+      <div class="detail-field">
+        <span class="field-label">Condition</span>
+        <span class="field-value"><%= @item.condition || '—' %></span>
+      </div>
+      <div class="detail-field">
+        <span class="field-label">Quantity</span>
+        <span class="field-value"><%= @item.quantity %></span>
+      </div>
+      <div class="detail-field">
+        <span class="field-label">External Stock</span>
+        <span class="field-value"><%= @item.external_stock || '—' %></span>
+      </div>
+      <div class="detail-field">
+        <span class="field-label">Cost Price</span>
+        <span class="field-value" style="color:#fbbf24;font-weight:600;">R<%= @item.cost_price %></span>
+      </div>
+      <div class="detail-field">
+        <span class="field-label">Selling Price</span>
+        <span class="field-value" style="color:#34d399;font-weight:600;">R<%= @item.selling_price %></span>
+      </div>
+      <div class="detail-field">
+        <span class="field-label">Original Price</span>
+        <span class="field-value" style="color:rgba(226,224,240,0.4);text-decoration:line-through;">R<%= @item.original_price %></span>
+      </div>
+      <div class="detail-field">
+        <span class="field-label">Barcode</span>
+        <span class="field-value"><%= @item.barcode || '—' %></span>
+      </div>
+    </div>
+
+    <% if @item.description.present? %>
+      <div class="detail-field" style="margin-top:0.5rem;">
+        <span class="field-label">Description</span>
+        <p class="field-value" style="font-size:0.875rem;line-height:1.5;color:rgba(226,224,240,0.7);"><%= @item.description %></p>
+      </div>
     <% end %>
 
-    <%= render @item %>
+    <% if @item.takealot_url.present? %>
+      <div class="detail-field">
+        <span class="field-label">Takealot</span>
+        <a href="<%= @item.takealot_url %>" target="_blank" style="color:#93c5fd;font-size:0.85rem;word-break:break-all;">View on Takealot →</a>
+      </div>
+    <% end %>
 
-    <%= link_to 'Edit this item', edit_item_path(@item),
-                class: 'mt-2 rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium' %>
-    <div class="inline-block ml-2">
-      <%= button_to 'Destroy this item', item_path(@item), method: :delete,
-                                                           class: 'mt-2 rounded-lg py-3 px-5 bg-gray-100 font-medium' %>
+    <!-- Actions -->
+    <div class="detail-actions">
+      <%= link_to 'Edit', edit_item_path(@item), class: 'btn-primary-glow btn-sm', style: 'text-decoration:none;text-align:center;' %>
+      <%= button_to 'Delete', item_path(@item), method: :delete, class: 'btn-danger btn-sm', style: 'border:none;cursor:pointer;', data: { confirm: 'Are you sure?' } %>
+      <%= link_to '← All Items', items_path, class: 'btn-secondary-glass btn-sm', style: 'text-decoration:none;text-align:center;' %>
     </div>
-    <%= link_to 'Back to items', items_path, class: 'ml-2 rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium' %>
   </div>
 </div>

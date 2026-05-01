@@ -1,9 +1,8 @@
 <%= form_with(model: item, class: 'contents') do |form| %>
   <% if item.errors.any? %>
-    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-lg mt-3">
-      <h2><%= pluralize(item.errors.count, 'error') %> prohibited this item from being saved:</h2>
-
-      <ul>
+    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:0.75rem;padding:0.75rem 1rem;margin-bottom:1rem;color:#f87171;font-size:0.875rem;">
+      <strong><%= pluralize(item.errors.count, 'error') %> prohibited this item from being saved:</strong>
+      <ul style="margin:0.5rem 0 0 1rem;">
         <% item.errors.each do |error| %>
           <li><%= error.full_message %></li>
         <% end %>
@@ -11,49 +10,65 @@
     </div>
   <% end %>
 
-  <div class="my-5">
-    <%= form.label :name %>
-    <%= form.text_field :name,
-                        class: 'block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full' %>
+  <div class="detail-field">
+    <label class="input-label" for="item_name">Name</label>
+    <%= form.text_field :name, class: 'input-glow', id: 'item_name' %>
   </div>
 
-  <div class="my-5">
-    <%= form.label :description %>
-    <%= form.text_area :description, rows: 4,
-                                     class: 'block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full' %>
+  <div class="detail-grid">
+    <div class="detail-field">
+      <label class="input-label" for="item_selling_price">Selling Price (R)</label>
+      <%= form.text_field :selling_price, class: 'input-glow', id: 'item_selling_price' %>
+    </div>
+    <div class="detail-field">
+      <label class="input-label" for="item_original_price">Original Price (R)</label>
+      <%= form.text_field :original_price, class: 'input-glow', id: 'item_original_price' %>
+    </div>
   </div>
 
-  <div class="my-5">
-    <%= form.label :condition %>
-    <%= form.text_field :condition,
-                        class: 'block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full' %>
+  <div class="detail-grid">
+    <div class="detail-field">
+      <label class="input-label" for="item_cost_price">Cost Price (R)</label>
+      <%= form.text_field :cost_price, class: 'input-glow', id: 'item_cost_price' %>
+    </div>
+    <div class="detail-field">
+      <label class="input-label" for="item_quantity">Quantity</label>
+      <%= form.number_field :quantity, class: 'input-glow', id: 'item_quantity' %>
+    </div>
   </div>
 
-  <div class="my-5">
-    <%= form.label :quantity %>
-    <%= form.number_field :quantity,
-                          class: 'block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full' %>
+  <div class="detail-grid">
+    <div class="detail-field">
+      <label class="input-label" for="item_external_stock">External Stock</label>
+      <%= form.number_field :external_stock, class: 'input-glow', id: 'item_external_stock' %>
+    </div>
+    <div class="detail-field">
+      <label class="input-label" for="item_condition">Condition</label>
+      <%= form.text_field :condition, class: 'input-glow', id: 'item_condition' %>
+    </div>
   </div>
 
-  <div class="my-5">
-    <%= form.label :cost_price %>
-    <%= form.text_field :cost_price,
-                        class: 'block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full' %>
+  <div class="detail-field">
+    <label class="input-label" for="item_category">Category</label>
+    <%= form.text_field :category, class: 'input-glow', id: 'item_category' %>
   </div>
 
-  <div class="my-5">
-    <%= form.label :selling_price %>
-    <%= form.text_field :selling_price,
-                        class: 'block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full' %>
+  <div class="detail-field">
+    <label class="input-label" for="item_description">Description</label>
+    <%= form.text_area :description, rows: 3, class: 'input-glow', id: 'item_description', style: 'resize:vertical;' %>
   </div>
 
-  <div class="my-5">
-    <%= form.label :image %>
-    <%= form.text_field :image,
-                        class: 'block shadow rounded-md border border-gray-200 outline-none px-3 py-2 mt-2 w-full' %>
+  <div class="detail-field">
+    <label class="input-label" for="item_takealot_url">Takealot URL</label>
+    <%= form.text_field :takealot_url, class: 'input-glow', id: 'item_takealot_url' %>
   </div>
 
-  <div class="inline">
-    <%= form.submit class: 'rounded-lg py-3 px-5 bg-blue-600 text-white inline-block font-medium cursor-pointer' %>
+  <div class="detail-field">
+    <label class="input-label" for="item_image">Image URL</label>
+    <%= form.text_field :image, class: 'input-glow', id: 'item_image' %>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <%= form.submit class: 'btn-primary-glow', style: 'cursor:pointer;' %>
   </div>
 <% end %>

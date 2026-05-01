@@ -1,0 +1,462 @@
+<% content_for :body_class, 'scanner-page' %>
+<% content_for :skip_container, true %>
+
+<div class="scanner-page" id="mobile-scan-app" data-csrf="<%= form_authenticity_token %>"
+     data-lookup-url="<%= lookup_barcode_items_path %>"
+     data-create-url="<%= create_from_mobile_scan_items_path %>">
+
+  <!-- ═══ Header ═══ -->
+  <header class="scanner-header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#8b5cf6;">
+        <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+      </svg>
+      <span style="font-weight:700;font-size:1.1rem;color:#e2e0f0;">Item Scanner</span>
+    </div>
+    <a href="<%= items_path %>" style="color:rgba(226,224,240,0.5);font-size:0.85rem;text-decoration:none;">
+      All Items →
+    </a>
+  </header>
+
+  <!-- ═══ State 1: Scanner ═══ -->
+  <section id="state-scan" class="scan-state active" style="padding:1.25rem;display:flex;flex-direction:column;align-items:center;gap:1.25rem;">
+    <div style="text-align:center;">
+      <h1 style="font-size:1.5rem;font-weight:700;margin:0 0 0.35rem;">Scan a Barcode</h1>
+      <p style="font-size:0.875rem;color:rgba(226,224,240,0.5);margin:0;">Position a barcode within the camera view</p>
+    </div>
+
+    <div class="scanner-viewport" id="scanner-viewport-container">
+      <div id="scanner-region" style="width:100%;height:100%;"></div>
+      <div class="scanner-laser"></div>
+      <div class="scanner-corners">
+        <div class="scanner-corner tl"></div>
+        <div class="scanner-corner tr"></div>
+        <div class="scanner-corner bl"></div>
+        <div class="scanner-corner br"></div>
+      </div>
+    </div>
+
+    <div class="status-badge scanning" id="scan-status">
+      <span class="pulse-dot purple"></span>
+      <span>Ready to scan</span>
+    </div>
+
+    <!-- Manual barcode entry -->
+    <div class="glass-card" style="width:100%;max-width:420px;padding:1rem;">
+      <p style="font-size:0.8rem;color:rgba(226,224,240,0.4);margin:0 0 0.6rem;text-align:center;">Or enter barcode manually</p>
+      <div style="display:flex;gap:0.6rem;">
+        <input type="text" id="manual-barcode-input" class="input-glow" placeholder="e.g. 6001234567890" inputmode="numeric" pattern="[0-9]*" style="flex:1;">
+        <button id="manual-barcode-btn" class="btn-primary-glow" style="width:auto;padding:0.65rem 1.2rem;font-size:0.875rem;" onclick="submitManualBarcode()">
+          Search
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ State 2: Loading ═══ -->
+  <section id="state-loading" class="scan-state hidden" style="padding:1.25rem;display:flex;flex-direction:column;align-items:center;gap:1.25rem;">
+    <div style="text-align:center;">
+      <h2 style="font-size:1.3rem;font-weight:700;margin:0 0 0.5rem;">Searching Takealot</h2>
+      <div class="barcode-display" id="loading-barcode-display">0000000000000</div>
+      <div class="status-badge loading">
+        <span class="pulse-dot amber"></span>
+        <span>Looking up product...</span>
+      </div>
+    </div>
+
+    <!-- Shimmer skeleton -->
+    <div class="glass-card slide-up" style="width:100%;max-width:420px;padding:1.5rem;">
+      <div style="display:flex;gap:1rem;margin-bottom:1.25rem;">
+        <div class="shimmer" style="width:100px;height:100px;flex-shrink:0;border-radius:0.75rem;"></div>
+        <div style="flex:1;">
+          <div class="shimmer shimmer-line w-3/4"></div>
+          <div class="shimmer shimmer-line w-1/2"></div>
+          <div class="shimmer shimmer-line w-full" style="height:10px;"></div>
+        </div>
+      </div>
+      <div class="shimmer shimmer-line w-full"></div>
+      <div class="shimmer shimmer-line w-3/4"></div>
+      <div class="shimmer shimmer-line w-1/2"></div>
+    </div>
+  </section>
+
+  <!-- ═══ State 3: Product Preview & Edit ═══ -->
+  <section id="state-preview" class="scan-state hidden" style="padding:1.25rem;display:flex;flex-direction:column;align-items:center;gap:1rem;">
+    <div class="glass-card slide-up" style="width:100%;max-width:480px;padding:1.5rem;" id="product-card">
+
+      <!-- Product image & name header -->
+      <div style="display:flex;gap:1rem;align-items:flex-start;margin-bottom:1.25rem;">
+        <div class="product-image-wrapper" style="max-width:120px;" id="product-image-container">
+          <img id="product-image" src="" alt="Product">
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="status-badge success" style="margin-bottom:0.5rem;">
+            <span class="pulse-dot green"></span>
+            <span>Product found</span>
+          </div>
+          <h3 id="product-name-display" style="font-size:1.05rem;font-weight:600;margin:0;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;"></h3>
+        </div>
+      </div>
+
+      <!-- Editable form fields -->
+      <div id="edit-fields" style="display:flex;flex-direction:column;gap:0.85rem;">
+        <div>
+          <label class="input-label" for="field-name">Name</label>
+          <input type="text" id="field-name" class="input-glow" data-field="name">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div>
+            <label class="input-label" for="field-selling-price">Selling Price (R)</label>
+            <input type="number" step="0.01" id="field-selling-price" class="input-glow" data-field="selling_price">
+          </div>
+          <div>
+            <label class="input-label" for="field-original-price">Original Price (R)</label>
+            <input type="number" step="0.01" id="field-original-price" class="input-glow" data-field="original_price">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div>
+            <label class="input-label" for="field-cost-price">Cost Price (R)</label>
+            <input type="number" step="0.01" id="field-cost-price" class="input-glow" data-field="cost_price">
+          </div>
+          <div>
+            <label class="input-label" for="field-quantity">Quantity</label>
+            <input type="number" id="field-quantity" class="input-glow" data-field="quantity" value="1">
+          </div>
+        </div>
+
+        <div>
+          <label class="input-label" for="field-category">Category</label>
+          <input type="text" id="field-category" class="input-glow" data-field="category">
+        </div>
+
+        <div>
+          <label class="input-label" for="field-condition">Condition</label>
+          <input type="text" id="field-condition" class="input-glow" data-field="condition" placeholder="New / Used / Refurbished">
+        </div>
+
+        <div>
+          <label class="input-label" for="field-description">Description</label>
+          <textarea id="field-description" class="input-glow" data-field="description" rows="3" style="resize:vertical;"></textarea>
+        </div>
+
+        <!-- Hidden fields -->
+        <input type="hidden" id="field-image" data-field="image">
+        <input type="hidden" id="field-takealot-url" data-field="takealot_url">
+        <input type="hidden" id="field-barcode" data-field="barcode">
+      </div>
+
+      <!-- Actions -->
+      <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:0.6rem;">
+        <button id="save-item-btn" class="btn-primary-glow" onclick="saveItem()">
+          Save Item
+        </button>
+        <button class="btn-secondary-glass" onclick="resetScanner()">
+          ← Scan Another
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ State 4: Success ═══ -->
+  <section id="state-success" class="scan-state hidden" style="padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem;">
+    <div class="success-check">
+      <svg viewBox="0 0 24 24">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <div style="text-align:center;">
+      <h2 style="font-size:1.4rem;font-weight:700;margin:0 0 0.4rem;">Item Saved!</h2>
+      <p id="success-item-name" style="font-size:0.9rem;color:rgba(226,224,240,0.5);margin:0;"></p>
+    </div>
+    <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:0.6rem;">
+      <button class="btn-primary-glow" onclick="resetScanner()">
+        Scan Another Barcode
+      </button>
+      <a id="success-edit-link" href="#" class="btn-secondary-glass" style="text-align:center;text-decoration:none;">
+        Edit Item Details →
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══ Error Toast ═══ -->
+  <div id="error-toast" style="position:fixed;bottom:-100px;left:50%;transform:translateX(-50%);z-index:100;transition:bottom 0.4s cubic-bezier(0.16,1,0.3,1);max-width:90%;width:400px;">
+    <div class="glass-card" style="padding:1rem 1.25rem;border-color:rgba(239,68,68,0.3);display:flex;align-items:center;gap:0.75rem;">
+      <div style="width:32px;height:32px;border-radius:50%;background:rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </div>
+      <span id="error-toast-msg" style="font-size:0.875rem;color:#f87171;flex:1;"></span>
+      <button onclick="hideError()" style="background:none;border:none;color:rgba(226,224,240,0.3);cursor:pointer;font-size:1.2rem;padding:0 4px;">✕</button>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  // ═══ Global State ═══
+  let html5QrCode = null;
+  let currentProductData = null;
+  let isScanning = false;
+
+  const app = document.getElementById('mobile-scan-app');
+  const csrfToken = app.dataset.csrf;
+  const lookupUrl = app.dataset.lookupUrl;
+  const createUrl = app.dataset.createUrl;
+
+  // ═══ Scanner Init ═══
+  document.addEventListener('turbo:load', initScanner);
+  document.addEventListener('DOMContentLoaded', initScanner);
+
+  let scannerInitialized = false;
+  function initScanner() {
+    if (scannerInitialized) return;
+    if (!document.getElementById('scanner-region')) return;
+    scannerInitialized = true;
+
+    // Check camera availability
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      updateScanStatus('Camera not available — use HTTPS or localhost', 'error');
+      return;
+    }
+
+    html5QrCode = new Html5Qrcode('scanner-region');
+    startScanning();
+  }
+
+  function startScanning() {
+    if (!html5QrCode) return;
+    isScanning = true;
+
+    const config = {
+      fps: 15,
+      qrbox: function(viewfinderWidth, viewfinderHeight) {
+        const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.75;
+        return { width: size, height: size * 0.5 };
+      },
+      aspectRatio: 1.0,
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39
+      ]
+    };
+
+    html5QrCode.start(
+      { facingMode: 'environment' },
+      config,
+      onScanSuccess,
+      () => {} // ignore scan failures silently
+    ).then(() => {
+      updateScanStatus('Camera active — scanning...', 'scanning');
+    }).catch(err => {
+      console.error('Camera start error:', err);
+      updateScanStatus('Camera error: ' + err.message, 'error');
+    });
+  }
+
+  function stopScanning() {
+    if (html5QrCode && isScanning) {
+      html5QrCode.stop().then(() => {
+        isScanning = false;
+      }).catch(() => {
+        isScanning = false;
+      });
+    }
+  }
+
+  // ═══ Scan Detected ═══
+  function onScanSuccess(decodedText) {
+    if (!isScanning) return;
+    stopScanning();
+
+    // Haptic feedback if available
+    if (navigator.vibrate) navigator.vibrate(100);
+
+    lookupBarcode(decodedText);
+  }
+
+  function submitManualBarcode() {
+    const input = document.getElementById('manual-barcode-input');
+    const barcode = input.value.trim();
+    if (!barcode) return;
+
+    stopScanning();
+    lookupBarcode(barcode);
+  }
+
+  // Enter key support for manual input
+  document.addEventListener('DOMContentLoaded', () => {
+    const manualInput = document.getElementById('manual-barcode-input');
+    if (manualInput) {
+      manualInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitManualBarcode();
+        }
+      });
+    }
+  });
+
+  // ═══ API: Lookup Barcode ═══
+  function lookupBarcode(barcode) {
+    showState('loading');
+    document.getElementById('loading-barcode-display').textContent = barcode;
+
+    fetch(lookupUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ barcode: barcode })
+    })
+    .then(res => {
+      if (!res.ok) return res.json().then(d => { throw new Error(d.error || 'Product not found'); });
+      return res.json();
+    })
+    .then(data => {
+      currentProductData = data.product;
+      currentProductData._barcode = barcode;
+      populatePreview(currentProductData);
+      showState('preview');
+    })
+    .catch(err => {
+      showError(err.message || 'Failed to look up barcode');
+      showState('scan');
+      if (!isScanning) {
+        setTimeout(startScanning, 500);
+      }
+    });
+  }
+
+  // ═══ Populate Preview ═══
+  function populatePreview(product) {
+    const img = document.getElementById('product-image');
+    img.src = product.image || '';
+    img.onerror = function() { this.style.display = 'none'; };
+    if (product.image) img.style.display = 'block';
+
+    document.getElementById('product-name-display').textContent = product.name || 'Unknown Product';
+
+    document.getElementById('field-name').value = product.name || '';
+    document.getElementById('field-selling-price').value = product.selling_price || '';
+    document.getElementById('field-original-price').value = product.original_price || '';
+    document.getElementById('field-cost-price').value = '';
+    document.getElementById('field-quantity').value = 1;
+    document.getElementById('field-category').value = product.category || '';
+    document.getElementById('field-condition').value = '';
+    document.getElementById('field-description').value = product.description || '';
+    document.getElementById('field-image').value = product.image || '';
+    document.getElementById('field-takealot-url').value = product.takealot_url || '';
+    document.getElementById('field-barcode').value = product._barcode || '';
+  }
+
+  // ═══ API: Save Item ═══
+  function saveItem() {
+    const btn = document.getElementById('save-item-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+    const itemData = {
+      item: {
+        name: document.getElementById('field-name').value,
+        selling_price: document.getElementById('field-selling-price').value,
+        original_price: document.getElementById('field-original-price').value,
+        cost_price: document.getElementById('field-cost-price').value,
+        quantity: document.getElementById('field-quantity').value,
+        category: document.getElementById('field-category').value,
+        condition: document.getElementById('field-condition').value,
+        description: document.getElementById('field-description').value,
+        image: document.getElementById('field-image').value,
+        takealot_url: document.getElementById('field-takealot-url').value,
+        barcode: document.getElementById('field-barcode').value
+      }
+    };
+
+    fetch(createUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(itemData)
+    })
+    .then(res => {
+      if (!res.ok) return res.json().then(d => { throw new Error(d.errors ? d.errors.join(', ') : (d.error || 'Save failed')); });
+      return res.json();
+    })
+    .then(data => {
+      document.getElementById('success-item-name').textContent = itemData.item.name;
+      document.getElementById('success-edit-link').href = data.redirect_url;
+      showState('success');
+    })
+    .catch(err => {
+      showError(err.message || 'Failed to save item');
+      btn.disabled = false;
+      btn.innerHTML = 'Save Item';
+    });
+  }
+
+  // ═══ State Management ═══
+  function showState(stateName) {
+    const states = ['scan', 'loading', 'preview', 'success'];
+    states.forEach(s => {
+      const el = document.getElementById('state-' + s);
+      if (s === stateName) {
+        el.classList.remove('hidden');
+        el.classList.add('active');
+      } else {
+        el.classList.remove('active');
+        el.classList.add('hidden');
+      }
+    });
+  }
+
+  function resetScanner() {
+    currentProductData = null;
+    scannerInitialized = false;
+    document.getElementById('manual-barcode-input').value = '';
+    document.getElementById('save-item-btn').disabled = false;
+    document.getElementById('save-item-btn').innerHTML = 'Save Item';
+    showState('scan');
+    setTimeout(() => {
+      scannerInitialized = false;
+      initScanner();
+    }, 300);
+  }
+
+  // ═══ Status & Errors ═══
+  function updateScanStatus(text, type) {
+    const badge = document.getElementById('scan-status');
+    const dotColors = { scanning: 'purple', loading: 'amber', success: 'green', error: 'error' };
+    badge.className = 'status-badge ' + (type || 'scanning');
+    badge.innerHTML = '<span class="pulse-dot ' + (dotColors[type] || 'purple') + '"></span><span>' + text + '</span>';
+  }
+
+  let errorTimeout;
+  function showError(msg) {
+    const toast = document.getElementById('error-toast');
+    document.getElementById('error-toast-msg').textContent = msg;
+    toast.style.bottom = '24px';
+
+    clearTimeout(errorTimeout);
+    errorTimeout = setTimeout(hideError, 5000);
+  }
+
+  function hideError() {
+    document.getElementById('error-toast').style.bottom = '-100px';
+    clearTimeout(errorTimeout);
+  }
+</script>

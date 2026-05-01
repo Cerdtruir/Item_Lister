@@ -1,19 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>ItemLister</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="description" content="Item inventory management with barcode scanning">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <%= stylesheet_link_tag 'tailwind', 'inter-font', "data-turbo-track": 'reload' %>
-
     <%= stylesheet_link_tag 'application', "data-turbo-track": 'reload' %>
     <%= javascript_importmap_tags %>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   </head>
-
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="<%= content_for?(:body_class) ? yield(:body_class) : 'app-body' %>">
+    <% if content_for?(:skip_container) %>
       <%= yield %>
-    </main>
+    <% else %>
+      <!-- ═══ Sidebar Nav ═══ -->
+      <nav class="app-sidebar" id="app-sidebar">
+        <div class="sidebar-brand">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#8b5cf6;">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+          <span class="brand-text">ItemLister</span>
+        </div>
+
+        <div class="sidebar-links">
+          <a href="<%= items_path %>" class="sidebar-link <%= 'active' if controller_name == 'items' && action_name == 'index' %>" id="nav-items">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+            <span>All Items</span>
+          </a>
+          <a href="<%= mobile_scan_items_path %>" class="sidebar-link <%= 'active' if action_name == 'mobile_scan' %>" id="nav-scanner">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <span>Scanner</span>
+          </a>
+          <a href="<%= new_item_path %>" class="sidebar-link <%= 'active' if action_name == 'new' %>" id="nav-new">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <span>New Item</span>
+          </a>
+        </div>
+
+        <div class="sidebar-footer">
+          <span class="sidebar-version">v1.0</span>
+        </div>
+      </nav>
+
+      <!-- ═══ Mobile top bar ═══ -->
+      <header class="app-topbar" id="app-topbar">
+        <button class="topbar-menu-btn" id="topbar-menu-btn" onclick="toggleSidebar()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <span class="topbar-brand">ItemLister</span>
+        <div style="width:22px;"></div>
+      </header>
+
+      <!-- ═══ Main Content ═══ -->
+      <main class="app-main">
+        <% if notice.present? %>
+          <div class="toast-notification success" id="flash-notice">
+            <div class="toast-icon success">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <span><%= notice %></span>
+            <button onclick="this.parentElement.remove()" class="toast-close">✕</button>
+          </div>
+        <% end %>
+        <% if alert.present? %>
+          <div class="toast-notification error" id="flash-alert">
+            <div class="toast-icon error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </div>
+            <span><%= alert %></span>
+            <button onclick="this.parentElement.remove()" class="toast-close">✕</button>
+          </div>
+        <% end %>
+        <%= yield %>
+      </main>
+
+      <!-- Sidebar overlay for mobile -->
+      <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+      <script>
+        function toggleSidebar() {
+          document.getElementById('app-sidebar').classList.toggle('open');
+          document.getElementById('sidebar-overlay').classList.toggle('open');
+        }
+        // Auto-dismiss flash after 4s
+        document.addEventListener('DOMContentLoaded', () => {
+          setTimeout(() => {
+            document.querySelectorAll('.toast-notification').forEach(el => {
+              el.style.opacity = '0';
+              el.style.transform = 'translateY(-10px)';
+              setTimeout(() => el.remove(), 400);
+            });
+          }, 4000);
+        });
+      </script>
+    <% end %>
   </body>
 </html>

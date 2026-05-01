@@ -1,43 +1,65 @@
-<div id="<%= dom_id item %>">
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Name:</strong>
-    <%= item.name %>
-  </p>
-
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Description:</strong>
-    <%= item.description %>
-  </p>
-
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Condition:</strong>
-    <%= item.condition %>
-  </p>
-
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Quantity:</strong>
-    <%= item.quantity %>
-  </p>
-
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Cost price:</strong>
-    <%= item.cost_price %>
-  </p>
-
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Selling price:</strong>
-    <%= item.selling_price %>
-  </p>
-
-  <p class="my-5">
-    <strong class="block font-medium mb-1">Image:</strong>
-    <%= item.image %>
-  </p>
-
-  <% if action_name != "show" %>
-    <%= link_to 'Show this item', item, class: 'rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium' %>
-    <%= link_to 'Edit this item', edit_item_path(item),
-                class: 'rounded-lg py-3 ml-2 px-5 bg-gray-100 inline-block font-medium' %>
-    <hr class="mt-6">
-  <% end %>
+<div id="<%= dom_id item %>" class="max-w-xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden">
+  <div class="w-full h-96 mb-6">
+    <img 
+      src="<%= "/#{item.id}.jpg" %>" 
+      alt="<%= item.name %>" 
+      class=""
+    >
+  </div>
+  <div class="p-6 space-y-4">
+    <div class="mb-4">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2"><%= item.name %></h2>
+      <p class="text-gray-600 line-clamp-3"><%= item.description %></p>
+    </div>
+    <div class="grid grid-cols-2 gap-4 border-t pt-4">
+      <div class="space-y-2">
+        <div>
+          <span class="text-sm font-semibold text-gray-600">Condition</span>
+          <p class="text-gray-800"><%= item.condition %></p>
+        </div>
+        <div>
+          <span class="text-sm font-semibold text-gray-600">Quantity</span>
+          <p class="text-gray-800"><%= item.quantity %></p>
+        </div>
+        <div>
+          <span class="text-sm font-semibold text-gray-600">External Stock</span>
+          <p class="text-gray-800"><%= item.external_stock %></p>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div>
+          <span class="text-sm font-semibold text-gray-600">Cost Price</span>
+          <p class="text-green-600 font-bold">R <%= (item.cost_price) %></p>
+        </div>
+        <div>
+          <span class="text-sm font-semibold text-gray-600">Selling Price</span>
+          <p class="text-blue-600 font-bold">R <%= (item.selling_price) %></p>
+        </div>
+        <div>
+          <span class="text-sm font-semibold text-gray-600">Original Price</span>
+          <p class="text-gray-500 line-through">R <%= (item.original_price) %></p>
+        </div>
+      </div>
+    </div>
+    <div class="border-t pt-4">
+      <div class="mb-2">
+        <span class="text-sm font-semibold text-gray-600">Takealot Link</span>
+        <a 
+          href="<%= item.takealot_url %>" 
+          target="_blank" 
+          class="text-blue-500 hover:underline block truncate"
+        >
+          <%= item.takealot_url %>
+        </a>
+      </div>
+    </div>
+    <% if action_name != "show" %>
+      <div class="flex space-x-2 border-t pt-4">
+        <%= link_to 'Show Details', item, 
+            class: 'flex-1 text-center rounded-lg py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 transition' %>
+        <%= link_to 'Edit Item', edit_item_path(item), 
+            class: 'flex-1 text-center rounded-lg py-2 bg-gray-50 text-gray-600 hover:bg-gray-100 transition' %>
+      </div>
+    <% end %>
+  </div>
 </div>

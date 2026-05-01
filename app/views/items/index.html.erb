@@ -1,30 +1,273 @@
-<div class="w-full">
-  <% if notice.present? %>
-    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-lg inline-block" id="notice"><%= notice %></p>
-  <% end %>
-  <div class="flex justify-between items-center">
-    <h1 class="font-bold text-4xl">Items</h1>
-    <%= link_to 'New item', new_item_path, class: 'rounded-lg py-3 px-5 bg-blue-600 text-white block font-medium' %>
+<div>
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Inventory</h1>
+    <div style="display:flex;gap:0.5rem;">
+      <a href="<%= new_item_path %>" class="btn-primary-glow btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Item
+      </a>
+    </div>
   </div>
-  <div id="items" class="min-w-full">
-    <% @items.each do |item| %>
-      <img class="w-1/3 display: inline-block mr-5" src="<%= item.image %>">
-      <div class="w-1/3 display: inline-block float-right mr-5">
-        <p class="my-5">
-          <strong class="block font-medium mb-1">Description:</strong>
-          <%= item.description %>
-        </p>
-        <p class="my-5">
-          <strong class="block font-medium mb-1">Quantity:</strong>
-          <%= item.quantity %>
-        </p>
-        <% if action_name != "show" %>
-          <%= link_to 'Show this item', item, class: 'rounded-lg py-3 px-5 bg-gray-100 inline-block font-medium' %>
-          <%= link_to 'Edit this item', edit_item_path(item),
-                class: 'rounded-lg py-3 ml-2 px-5 bg-gray-100 inline-block font-medium' %>
-          <hr class="mt-6">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Items</div>
+      <div class="stat-value purple"><%= @total_items %></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cost Value</div>
+      <div class="stat-value amber">R<%= number_with_delimiter(@total_cost) %></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Selling Value</div>
+      <div class="stat-value green">R<%= number_with_delimiter(@total_selling) %></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Profit</div>
+      <div class="stat-value blue">R<%= number_with_delimiter(@total_profit) %></div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-bar">
+    <input type="text" id="table-search" class="input-glow" placeholder="Search items..." oninput="filterTable(this.value)">
+  </div>
+
+  <!-- Excel Table -->
+  <div class="table-wrapper">
+    <table class="excel-table" id="items-table">
+      <thead>
+        <tr>
+          <th style="width:40px;cursor:pointer;" onclick="sortTable(0, 'num')"># <span class="sort-icon"></span></th>
+          <th style="width:44px;">Img</th>
+          <th style="cursor:pointer;" onclick="sortTable(2, 'str')">Name <span class="sort-icon"></span></th>
+          <th style="cursor:pointer;" onclick="sortTable(3, 'str')">Category <span class="sort-icon"></span></th>
+          <th style="cursor:pointer;" onclick="sortTable(4, 'num')">Qty <span class="sort-icon"></span></th>
+          <th style="cursor:pointer;" onclick="sortTable(5, 'num')">Cost (R) <span class="sort-icon"></span></th>
+          <th style="cursor:pointer;" onclick="sortTable(6, 'num')">Selling (R) <span class="sort-icon"></span></th>
+          <th style="cursor:pointer;" onclick="sortTable(7, 'num')">Original (R) <span class="sort-icon"></span></th>
+          <th style="cursor:pointer;" onclick="sortTable(8, 'str')">Condition <span class="sort-icon"></span></th>
+          <th style="width:110px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="items-tbody">
+        <% @items.each do |item| %>
+          <tr id="item-row-<%= item.id %>" data-item-id="<%= item.id %>" data-name="<%= item.name&.downcase %>">
+            <!-- View mode -->
+            <td class="view-cell"><%= item.id %></td>
+            <td class="view-cell">
+              <img src="/<%= item.id %>.jpg" class="cell-img" onerror="this.style.display='none'" alt="">
+            </td>
+            <td class="view-cell">
+              <div class="cell-name" title="<%= item.name %>"><%= item.name %></div>
+            </td>
+            <td class="view-cell"><%= item.category %></td>
+            <td class="view-cell"><%= item.quantity %></td>
+            <td class="view-cell"><%= item.cost_price %></td>
+            <td class="view-cell"><%= item.selling_price %></td>
+            <td class="view-cell"><%= item.original_price %></td>
+            <td class="view-cell"><%= item.condition %></td>
+            <td class="view-cell">
+              <div class="cell-actions">
+                <button class="btn-secondary-glass btn-icon" onclick="startEdit(<%= item.id %>)" title="Edit">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <a href="<%= item_path(item) %>" class="btn-secondary-glass btn-icon" title="View" style="text-decoration:none;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </a>
+                <button class="btn-danger btn-icon" onclick="deleteItem(<%= item.id %>)" title="Delete">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+
+            <!-- Edit mode (hidden by default) -->
+            <td class="edit-cell" style="display:none;"><%= item.id %></td>
+            <td class="edit-cell" style="display:none;">
+              <img src="/<%= item.id %>.jpg" class="cell-img" onerror="this.style.display='none'" alt="">
+            </td>
+            <td class="edit-cell" style="display:none;">
+              <input type="text" class="edit-input" data-field="name" value="<%= item.name %>">
+            </td>
+            <td class="edit-cell" style="display:none;">
+              <input type="text" class="edit-input" data-field="category" value="<%= item.category %>">
+            </td>
+            <td class="edit-cell" style="display:none;">
+              <input type="number" class="edit-input" data-field="quantity" value="<%= item.quantity %>">
+            </td>
+            <td class="edit-cell" style="display:none;">
+              <input type="number" step="0.01" class="edit-input" data-field="cost_price" value="<%= item.cost_price %>">
+            </td>
+            <td class="edit-cell" style="display:none;">
+              <input type="number" step="0.01" class="edit-input" data-field="selling_price" value="<%= item.selling_price %>">
+            </td>
+            <td class="edit-cell" style="display:none;">
+              <input type="number" step="0.01" class="edit-input" data-field="original_price" value="<%= item.original_price %>">
+            </td>
+            <td class="edit-cell" style="display:none;">
+              <input type="text" class="edit-input" data-field="condition" value="<%= item.condition %>">
+            </td>
+            <td class="edit-cell" style="display:none;">
+              <div class="cell-actions">
+                <button class="btn-success btn-icon" onclick="saveEdit(<%= item.id %>)" title="Save">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <button class="btn-secondary-glass btn-icon" onclick="cancelEdit(<%= item.id %>)" title="Cancel">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
         <% end %>
-      </div>
-    <% end %>
+      </tbody>
+    </table>
   </div>
 </div>
+
+<script>
+  function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  }
+
+  // ═══ Inline Edit ═══
+  window.startEdit = function(id) {
+    const row = document.getElementById('item-row-' + id);
+    row.classList.add('editing');
+    row.querySelectorAll('.view-cell').forEach(c => c.style.display = 'none');
+    row.querySelectorAll('.edit-cell').forEach(c => c.style.display = '');
+    // Focus first input
+    const firstInput = row.querySelector('.edit-input');
+    if (firstInput) firstInput.focus();
+  };
+
+  window.cancelEdit = function(id) {
+    const row = document.getElementById('item-row-' + id);
+    row.classList.remove('editing');
+    row.querySelectorAll('.view-cell').forEach(c => c.style.display = '');
+    row.querySelectorAll('.edit-cell').forEach(c => c.style.display = 'none');
+  };
+
+  window.saveEdit = function(id) {
+    const row = document.getElementById('item-row-' + id);
+    const inputs = row.querySelectorAll('.edit-input');
+    const data = { item: {} };
+    inputs.forEach(inp => { data.item[inp.dataset.field] = inp.value; });
+
+    const saveBtn = row.querySelector('.btn-success');
+    saveBtn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0;"></span>';
+    saveBtn.disabled = true;
+
+    fetch('/items/' + id + '.json', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken(),
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Save failed');
+      return res.json();
+    })
+    .then(item => {
+      // Update view cells with new values
+      const viewCells = row.querySelectorAll('.view-cell');
+      // cells: id, img, name, category, qty, cost, selling, original, condition, actions
+      viewCells[2].querySelector('.cell-name').textContent = data.item.name || '';
+      viewCells[3].textContent = data.item.category || '';
+      viewCells[4].textContent = data.item.quantity || '';
+      viewCells[5].textContent = data.item.cost_price || '';
+      viewCells[6].textContent = data.item.selling_price || '';
+      viewCells[7].textContent = data.item.original_price || '';
+      viewCells[8].textContent = data.item.condition || '';
+      window.cancelEdit(id);
+      window.showTableToast('Item updated!', 'success');
+    })
+    .catch(err => {
+      window.showTableToast('Failed to save: ' + err.message, 'error');
+      saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      saveBtn.disabled = false;
+    });
+  };
+
+  // ═══ Delete ═══
+  window.deleteItem = function(id) {
+    if (!confirm('Delete this item? This cannot be undone.')) return;
+    fetch('/items/' + id + '.json', {
+      method: 'DELETE',
+      headers: { 'X-CSRF-Token': getCsrfToken(), 'Accept': 'application/json' }
+    }).then(res => {
+      if (res.ok) {
+        const row = document.getElementById('item-row-' + id);
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(-20px)';
+        row.style.transition = 'all 0.3s ease';
+        setTimeout(() => row.remove(), 300);
+        window.showTableToast('Item deleted', 'success');
+      } else {
+        window.showTableToast('Delete failed', 'error');
+      }
+    });
+  };
+
+  // ═══ Search/Filter ═══
+  window.filterTable = function(query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll('#items-tbody tr').forEach(row => {
+      const name = row.dataset.name || '';
+      row.style.display = name.includes(q) ? '' : 'none';
+    });
+  };
+
+  // ═══ Sort Table ═══
+  window.sortDir = window.sortDir || {};
+  window.sortTable = function(n, type) {
+    const table = document.getElementById("items-table");
+    const tbody = document.getElementById("items-tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    
+    // Toggle direction
+    window.sortDir[n] = !window.sortDir[n];
+    const isAsc = window.sortDir[n];
+
+    // Reset all icons
+    table.querySelectorAll("th .sort-icon").forEach(icon => icon.textContent = "");
+    // Set current icon
+    const currentIcon = table.querySelectorAll("th")[n].querySelector(".sort-icon");
+    if (currentIcon) {
+      currentIcon.textContent = isAsc ? " ▲" : " ▼";
+    }
+
+    rows.sort((rowA, rowB) => {
+      let cellA = rowA.querySelectorAll("td.view-cell")[n].textContent.trim();
+      let cellB = rowB.querySelectorAll("td.view-cell")[n].textContent.trim();
+      
+      if (type === 'num') {
+        let valA = parseFloat(cellA) || 0;
+        let valB = parseFloat(cellB) || 0;
+        return isAsc ? valA - valB : valB - valA;
+      } else {
+        return isAsc ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+      }
+    });
+
+    // Re-append rows in new order
+    rows.forEach(row => tbody.appendChild(row));
+  };
+
+  // ═══ Toast ═══
+  window.showTableToast = function(msg, type) {
+    const existing = document.getElementById('table-toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'table-toast';
+    toast.className = 'toast-notification ' + type;
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:100;max-width:360px;animation:slide-up 0.4s ease;';
+    toast.innerHTML = '<span>' + msg + '</span><button onclick="this.parentElement.remove()" class="toast-close">✕</button>';
+    document.body.appendChild(toast);
+    setTimeout(() => { if (toast.parentElement) toast.remove(); }, 3000);
+  };
+</script>
