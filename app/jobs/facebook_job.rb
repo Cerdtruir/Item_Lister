@@ -2,14 +2,16 @@ class FacebookJob < ApplicationJob
   queue_as :default
 
   def perform
-    items = Item.all
+    items = Item.where('quantity > ?', 0).order(:id).reverse
     headers = ['Title', 'Photos Folder', 'Photos Names', 'Price', 'Category', 'Condition', 'Brand', 'Description',
                'Location', 'Groups', 'Stock']
     CSV.open('public/facebook_items.csv', 'w', write_headers: true, headers:) do |writer|
       items.each do |item|
-        next if item.quantity.zero?
+        # Item.where(id: 214)
 
-        description = "#{item.description}" # Assuming 'stock' is an attribute of the Item model
+        name = item.name.gsub('"', '')
+
+        description = "#{item.name}" # Assuming 'stock' is an attribute of the Item model
         description += "\n\nOriginal invoice available."
         description += "\n\nView my website at https://thedealsite.co.za/"
         description += "\n\nView my bobshop reviews and items at: https://www.bobshop.co.za/user/1475301/The_Deal_Site"
@@ -21,7 +23,7 @@ class FacebookJob < ApplicationJob
                       'New'
                     end
 
-        writer << ["#{item.condition} - #{item.name}", '/home/n/github-repos/Item_Lister/public', "#{item.id}.jpg", item.selling_price.to_i,
+        writer << ["#{item.condition} - #{name}", '/home/n/github-repos/Item_Lister/public', "#{item.id}.jpg", item.selling_price.to_i,
                    'Miscellaneous', condition, '', description, 'Kyalami AH, South Africa', 'Marketplace', item.quantity]
       end
     end
