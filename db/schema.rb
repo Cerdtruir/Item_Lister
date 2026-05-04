@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_08_23_100000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_04_121133) do
   create_table "items", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -27,6 +27,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_08_23_100000) do
     t.boolean "takealot_condition"
     t.string "takealot_url"
     t.string "barcode"
+    t.index ["barcode"], name: "index_items_on_barcode", unique: true
   end
 
 end

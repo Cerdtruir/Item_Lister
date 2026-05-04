@@ -64,6 +64,11 @@
   </div>
 
   <div class="detail-field">
+    <label class="input-label" for="item_barcode">Barcode</label>
+    <%= form.text_field :barcode, class: 'input-glow', id: 'item_barcode' %>
+  </div>
+
+  <div class="detail-field">
     <label class="input-label" for="item_image">Image URL</label>
     <%= form.text_field :image, class: 'input-glow', id: 'item_image' %>
   </div>
