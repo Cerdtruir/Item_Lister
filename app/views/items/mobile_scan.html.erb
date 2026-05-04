@@ -332,10 +332,14 @@
       showState('preview');
     })
     .catch(err => {
-      showError(err.message || 'Failed to look up barcode');
-      showState('scan');
-      if (!isScanning) {
-        setTimeout(startScanning, 500);
+      if (err.message && err.message.toLowerCase().includes('not found')) {
+        window.location.href = `/items/new?item[barcode]=${encodeURIComponent(barcode)}`;
+      } else {
+        showError(err.message || 'Failed to look up barcode');
+        showState('scan');
+        if (!isScanning) {
+          setTimeout(startScanning, 500);
+        }
       }
     });
   }
