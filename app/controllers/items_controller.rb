@@ -128,6 +128,14 @@ class ItemsController < ApplicationController
       return render json: { error: 'Barcode is required.' }, status: :unprocessable_entity
     end
 
+    existing_item = Item.find_by(barcode: barcode)
+    if existing_item
+      return render json: {
+        exists: true,
+        item_url: item_path(existing_item)
+      }, status: :ok
+    end
+
     data = TakealotBarcodeService.new(barcode).fetch_item_data
 
     if data[:error]

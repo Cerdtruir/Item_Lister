@@ -326,6 +326,15 @@
       return res.json();
     })
     .then(data => {
+      if (data.exists) {
+        if (confirm("Item already exists. Do you want to view it?")) {
+          window.location.href = data.item_url;
+        } else {
+          resetScanner();
+        }
+        return;
+      }
+
       currentProductData = data.product;
       currentProductData._barcode = barcode;
       populatePreview(currentProductData);
