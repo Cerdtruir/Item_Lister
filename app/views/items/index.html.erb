@@ -58,7 +58,7 @@
             <!-- View mode -->
             <td class="view-cell"><%= item.id %></td>
             <td class="view-cell">
-              <img src="/<%= item.id %>.jpg" class="cell-img" onerror="this.style.display='none'" alt="">
+              <img src="/assets/<%= item.id %>.jpg" class="cell-img" onerror="this.style.display='none'" alt="">
             </td>
             <td class="view-cell">
               <div class="cell-name" title="<%= item.name %>"><%= item.name %></div>
@@ -86,7 +86,7 @@
             <!-- Edit mode (hidden by default) -->
             <td class="edit-cell" style="display:none;"><%= item.id %></td>
             <td class="edit-cell" style="display:none;">
-              <img src="/<%= item.id %>.jpg" class="cell-img" onerror="this.style.display='none'" alt="">
+              <img src="/assets/<%= item.id %>.jpg" class="cell-img" onerror="this.style.display='none'" alt="">
             </td>
             <td class="edit-cell" style="display:none;">
               <input type="text" class="edit-input" data-field="name" value="<%= item.name %>">

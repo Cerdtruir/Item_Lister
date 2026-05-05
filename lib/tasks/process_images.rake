@@ -17,8 +17,8 @@ namespace :images do
 
       # Convert to JPG
       image.format 'jpg'
-      image.write("public/#{item.id}.jpg")
-      Cloudinary::Uploader.upload("public/#{item.id}.jpg",
+      image.write("public/assets/#{item.id}.jpg")
+      Cloudinary::Uploader.upload("public/assets/#{item.id}.jpg",
                                   public_id: item.id)
     rescue StandardError => e
       puts "Error downloading image from #{item.image}: #{e.message}"
