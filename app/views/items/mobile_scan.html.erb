@@ -306,14 +306,29 @@
   }
 
   // ═══ Scan Detected ═══
+  let isConfirming = false;
+
   function onScanSuccess(decodedText) {
-    if (!isScanning) return;
-    stopScanning();
+    if (!isScanning || isConfirming) return;
+
+    if (!isValidBarcode(decodedText)) {
+      showError('Invalid barcode format');
+      return;
+    }
 
     // Haptic feedback if available
     if (navigator.vibrate) navigator.vibrate(100);
 
-    lookupBarcode(decodedText);
+    isConfirming = true;
+    setTimeout(() => {
+      if (confirm(`Scanned barcode: ${decodedText}\n\nUse this barcode?`)) {
+        isConfirming = false;
+        stopScanning();
+        lookupBarcode(decodedText);
+      } else {
+        isConfirming = false;
+      }
+    }, 50);
   }
 
   function submitManualBarcode() {
