@@ -245,9 +245,7 @@
         Html5QrcodeSupportedFormats.EAN_13,
         Html5QrcodeSupportedFormats.EAN_8,
         Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39
+        Html5QrcodeSupportedFormats.UPC_E
       ]
     };
 
@@ -274,6 +272,39 @@
     }
   }
 
+  // ═══ Barcode Validation ═══
+  function isValidBarcode(barcode) {
+    if (!/^\d{8,14}$/.test(barcode)) return false;
+    
+    let testBarcode = barcode;
+    if (barcode.length === 8 && (barcode.startsWith('0') || barcode.startsWith('1'))) {
+      const sys = barcode[0];
+      const check = barcode[7];
+      const x = barcode.substring(1, 7);
+      const last = x[5];
+      if (['0', '1', '2'].includes(last)) {
+        testBarcode = sys + x.substring(0, 2) + last + '0000' + x.substring(2, 5) + check;
+      } else if (last === '3') {
+        testBarcode = sys + x.substring(0, 3) + '00000' + x.substring(3, 5) + check;
+      } else if (last === '4') {
+        testBarcode = sys + x.substring(0, 4) + '00000' + x[4] + check;
+      } else {
+        testBarcode = sys + x.substring(0, 5) + '0000' + last + check;
+      }
+    }
+    
+    function checkGTIN(code) {
+      const pad = code.padStart(14, '0');
+      let sum = 0;
+      for (let i = 0; i < 13; i++) {
+        sum += parseInt(pad[i], 10) * (i % 2 === 0 ? 3 : 1);
+      }
+      return (10 - (sum % 10)) % 10 === parseInt(pad[13], 10);
+    }
+    
+    return checkGTIN(barcode) || (testBarcode !== barcode && checkGTIN(testBarcode));
+  }
+
   // ═══ Scan Detected ═══
   function onScanSuccess(decodedText) {
     if (!isScanning) return;
@@ -289,6 +320,11 @@
     const input = document.getElementById('manual-barcode-input');
     const barcode = input.value.trim();
     if (!barcode) return;
+
+    if (!isValidBarcode(barcode)) {
+      showError('Invalid barcode (checksum failed or wrong length)');
+      return;
+    }
 
     stopScanning();
     lookupBarcode(barcode);
