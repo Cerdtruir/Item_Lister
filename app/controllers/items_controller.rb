@@ -89,10 +89,6 @@ class ItemsController < ApplicationController
     @item.upload_image(@item)
   end
 
-  def scan_barcode
-    # Renders the view with the barcode scanner
-  end
-
   def create_from_barcode
     barcode = params[:barcode]
 
