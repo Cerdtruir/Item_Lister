@@ -44,7 +44,7 @@
     </div>
     <div class="detail-field">
       <label class="input-label" for="item_condition">Condition</label>
-      <%= form.text_field :condition, class: 'input-glow', id: 'item_condition' %>
+      <%= form.select :condition, ['Brand New', 'Used', 'New Unsealed'], { prompt: 'Select Condition' }, class: 'input-glow', id: 'item_condition' %>
     </div>
   </div>
 
