@@ -9,6 +9,8 @@ Rails.application.routes.draw do
       get 'mobile_scan'
       post 'lookup_barcode'
       post 'create_from_mobile_scan'
+      get 'google_scan'
+      post 'lookup_google'
     end
   end
 

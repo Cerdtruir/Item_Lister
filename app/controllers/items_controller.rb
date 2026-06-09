@@ -143,6 +143,36 @@ class ItemsController < ApplicationController
     render json: { error: "Failed to fetch product data: #{e.message}" }, status: :internal_server_error
   end
 
+  def google_scan
+    # Renders the google scanner view
+  end
+
+  def lookup_google
+    barcode = params[:barcode]
+
+    unless barcode.present?
+      return render json: { error: 'Barcode is required.' }, status: :unprocessable_entity
+    end
+
+    existing_item = Item.find_by(barcode: barcode)
+    if existing_item
+      return render json: {
+        exists: true,
+        item_url: item_path(existing_item)
+      }, status: :ok
+    end
+
+    data = GoogleBarcodeService.new(barcode).fetch_item_data
+
+    if data[:error]
+      render json: { error: data[:error] }, status: :not_found
+    else
+      render json: { product: data }, status: :ok
+    end
+  rescue StandardError => e
+    render json: { error: "Failed to fetch product data: #{e.message}" }, status: :internal_server_error
+  end
+
   def create_from_mobile_scan
     @item = Item.new(mobile_scan_params)
 
