@@ -3,6 +3,12 @@
   <div class="page-header">
     <h1 class="page-title">Inventory</h1>
     <div style="display:flex;gap:0.5rem;">
+      <%= form_with url: sync_images_items_path, method: :post, local: true, style: 'display:inline;' do %>
+        <button type="submit" class="btn-secondary-glass btn-sm" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" onclick="this.innerHTML='<span class=\'spinner\' style=\'width:14px;height:14px;border-width:2px;margin:0;\'></span> Syncing...';this.disabled=true;this.form.submit();">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Sync Images
+        </button>
+      <% end %>
       <a href="<%= new_item_path %>" class="btn-primary-glow btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add Item

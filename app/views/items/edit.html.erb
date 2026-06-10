@@ -3,6 +3,12 @@
   <div class="detail-card">
     <%= render 'form', item: @item %>
     <div class="detail-actions">
+      <%= form_with url: reupload_image_item_path(@item), method: :post, local: true, style: 'display:inline;' do %>
+        <button type="submit" class="btn-secondary-glass btn-sm" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" onclick="this.innerHTML='<span class=\'spinner\' style=\'width:14px;height:14px;border-width:2px;margin:0;\'></span> Uploading...';this.disabled=true;this.form.submit();">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Re-upload Image
+        </button>
+      <% end %>
       <%= link_to 'View Item', @item, class: 'btn-secondary-glass btn-sm', style: 'text-decoration:none;text-align:center;' %>
       <%= link_to '← All Items', items_path, class: 'btn-secondary-glass btn-sm', style: 'text-decoration:none;text-align:center;' %>
     </div>

@@ -49,4 +49,22 @@ class Item < ApplicationRecord
     Cloudinary::Uploader.upload("public/assets/#{item.id}.jpg",
                                 public_id: item.id)
   end
+
+  def force_upload_image
+    return unless image.present?
+
+    downloaded_image = HTTParty.get(image,
+                                    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36' }).body
+    img = MiniMagick::Image.read(downloaded_image)
+
+    img.combine_options do |c|
+      c.background 'white'
+      c.flatten
+    end
+
+    img.format 'jpg'
+    img.write("public/assets/#{id}.jpg")
+    Cloudinary::Uploader.upload("public/assets/#{id}.jpg",
+                                public_id: id)
+  end
 end

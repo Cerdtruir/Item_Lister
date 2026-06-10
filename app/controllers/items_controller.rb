@@ -1,5 +1,5 @@
 class ItemsController < ApplicationController
-  before_action :set_item, only: %i[show edit update destroy]
+  before_action :set_item, only: %i[show edit update destroy reupload_image]
 
   # GET /items or /items.json
   def index
@@ -185,6 +185,41 @@ class ItemsController < ApplicationController
     end
   rescue StandardError => e
     render json: { error: "Failed to create item: #{e.message}" }, status: :internal_server_error
+  end
+
+  def sync_images
+    results = { success: 0, failed: 0, skipped: 0, errors: [] }
+
+    Item.where.not(image: [nil, '']).each do |item|
+      if File.exist?("public/assets/#{item.id}.jpg")
+        results[:skipped] += 1
+        next
+      end
+
+      item.upload_image(item)
+      results[:success] += 1
+    rescue StandardError => e
+      results[:failed] += 1
+      results[:errors] << "Item ##{item.id}: #{e.message}"
+    end
+
+    respond_to do |format|
+      format.html { redirect_to items_url, notice: "Sync complete: #{results[:success]} uploaded, #{results[:skipped]} skipped, #{results[:failed]} failed." }
+      format.json { render json: results }
+    end
+  end
+
+  def reupload_image
+    @item.force_upload_image
+    respond_to do |format|
+      format.html { redirect_to edit_item_path(@item), notice: 'Image re-uploaded to Cloudinary.' }
+      format.json { render json: { success: true } }
+    end
+  rescue StandardError => e
+    respond_to do |format|
+      format.html { redirect_to edit_item_path(@item), alert: "Image upload failed: #{e.message}" }
+      format.json { render json: { error: e.message }, status: :unprocessable_entity }
+    end
   end
 
   private
