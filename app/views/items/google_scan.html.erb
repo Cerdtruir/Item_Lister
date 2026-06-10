@@ -200,12 +200,15 @@
 </div>
 
 <script type="text/javascript">
+(function() {
   // ═══ Global State ═══
   let html5QrCode = null;
   let currentProductData = null;
   let isScanning = false;
 
   const app = document.getElementById('google-scan-app');
+  if (!app) return;
+
   const csrfToken = app.dataset.csrf;
   const lookupUrl = app.dataset.lookupUrl;
   const createUrl = app.dataset.createUrl;
@@ -523,4 +526,10 @@
     document.getElementById('error-toast').style.bottom = '-100px';
     clearTimeout(errorTimeout);
   }
+
+  // ═══ Global window hooks ═══
+  window.submitManualBarcode = submitManualBarcode;
+  window.saveItem = saveItem;
+  window.resetScanner = resetScanner;
+})();
 </script>
