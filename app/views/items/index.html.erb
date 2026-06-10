@@ -92,7 +92,12 @@
               <input type="text" class="edit-input" data-field="name" value="<%= item.name %>">
             </td>
             <td class="edit-cell" style="display:none;">
-              <input type="text" class="edit-input" data-field="category" value="<%= item.category %>">
+              <select class="edit-input" data-field="category">
+                <option value="">Select Category</option>
+                <% Item::CATEGORIES.each do |cat| %>
+                  <option value="<%= cat %>" <%= 'selected' if item.category == cat %>><%= cat %></option>
+                <% end %>
+              </select>
             </td>
             <td class="edit-cell" style="display:none;">
               <input type="number" class="edit-input" data-field="quantity" value="<%= item.quantity %>">
@@ -107,7 +112,12 @@
               <input type="number" step="0.01" class="edit-input" data-field="original_price" value="<%= item.original_price %>">
             </td>
             <td class="edit-cell" style="display:none;">
-              <input type="text" class="edit-input" data-field="condition" value="<%= item.condition %>">
+              <select class="edit-input" data-field="condition">
+                <option value="">Select Condition</option>
+                <% Item::CONDITIONS.each do |cond| %>
+                  <option value="<%= cond %>" <%= 'selected' if item.condition == cond %>><%= cond %></option>
+                <% end %>
+              </select>
             </td>
             <td class="edit-cell" style="display:none;">
               <div class="cell-actions">

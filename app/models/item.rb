@@ -1,6 +1,34 @@
 class Item < ApplicationRecord
   validates :barcode, uniqueness: true, allow_nil: true, allow_blank: true
 
+  CATEGORIES = [
+    'Baby & Toddler',
+    'Beauty & Personal Care',
+    'Books & Stationery',
+    'Clothing, Shoes & Accessories',
+    'Computers & Electronics',
+    'DIY, Automotive & Industrial',
+    'Gaming',
+    'Garden, Pool & Patio',
+    'Health & Household',
+    'Home & Kitchen',
+    'Liquor',
+    'Luggage & Travel',
+    'Mobile & Wearables',
+    'Music, Movies & TV',
+    'Musical Instruments',
+    'Pets',
+    'Sport & Training',
+    'Toys',
+    'TV, Audio & Video'
+  ].freeze
+
+  CONDITIONS = [
+    'Brand New',
+    'New Unsealed',
+    'Used'
+  ].freeze
+
   def upload_image(item)
     return if File.exist?("public/#{item.id}.jpg")
 

@@ -44,13 +44,13 @@
     </div>
     <div class="detail-field">
       <label class="input-label" for="item_condition">Condition</label>
-      <%= form.select :condition, ['Brand New', 'Used', 'New Unsealed'], { prompt: 'Select Condition' }, class: 'input-glow', id: 'item_condition' %>
+      <%= form.select :condition, Item::CONDITIONS, { prompt: 'Select Condition' }, class: 'input-glow', id: 'item_condition' %>
     </div>
   </div>
 
   <div class="detail-field">
     <label class="input-label" for="item_category">Category</label>
-    <%= form.text_field :category, class: 'input-glow', id: 'item_category' %>
+    <%= form.select :category, Item::CATEGORIES, { prompt: 'Select Category' }, class: 'input-glow', id: 'item_category' %>
   </div>
 
   <div class="detail-field">
