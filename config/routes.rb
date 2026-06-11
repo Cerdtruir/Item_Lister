@@ -11,6 +11,10 @@ Rails.application.routes.draw do
       post 'create_from_mobile_scan'
       get 'google_scan'
       post 'lookup_google'
+      post 'sync_images'
+    end
+    member do
+      post 'reupload_image'
     end
   end
 
