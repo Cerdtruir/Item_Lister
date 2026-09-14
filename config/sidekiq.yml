@@ -1,0 +1,10 @@
+:concurrency: 5
+:queues:
+  - default
+
+:schedule:
+  sync_all_platforms:
+    cron: "*/30 * * * *"
+    class: "SyncPlatformStockJob"
+    args: ["all"]
+    description: "Sync Takealot, WooCommerce, Amazon, and Zoho stock and listing status every 30 minutes"

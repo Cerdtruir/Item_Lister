@@ -73,7 +73,42 @@
     <%= form.text_field :image, class: 'input-glow', id: 'item_image' %>
   </div>
 
+  <!-- Platform Listing Status -->
+  <div style="margin-top:1.25rem;padding:1rem;background:rgba(30,41,59,0.4);border:1px solid rgba(148,163,184,0.1);border-radius:0.75rem;">
+    <div style="font-size:0.75rem;font-weight:600;color:rgba(148,163,184,0.6);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;">Platform Listing Status</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:0.75rem;">
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;color:rgba(226,232,240,0.8);">
+        <%= form.check_box :listed_on_takealot, style: 'width:16px;height:16px;accent-color:#f59e0b;cursor:pointer;' %>
+        <span style="color:#f59e0b;font-weight:600;">Takealot</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;color:rgba(226,232,240,0.8);">
+        <%= form.check_box :listed_on_woocommerce, style: 'width:16px;height:16px;accent-color:#a78bfa;cursor:pointer;' %>
+        <span style="color:#a78bfa;font-weight:600;">WooCommerce</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;color:rgba(226,232,240,0.8);">
+        <%= form.check_box :listed_on_amazon, style: 'width:16px;height:16px;accent-color:#34d399;cursor:pointer;' %>
+        <span style="color:#34d399;font-weight:600;">Amazon.co.za</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;color:rgba(226,232,240,0.8);">
+        <%= form.check_box :listed_on_zoho, style: 'width:16px;height:16px;accent-color:#38bdf8;cursor:pointer;' %>
+        <span style="color:#38bdf8;font-weight:600;">Zoho</span>
+      </label>
+    </div>
+    <% if item.persisted? %>
+      <div style="margin-top:0.75rem;display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:0.5rem;font-size:0.7rem;color:rgba(148,163,184,0.5);">
+        <div>Offer ID: <%= item.takealot_offer_id.presence || '—' %></div>
+        <div>WC ID: <%= item.woocommerce_product_id.presence || '—' %></div>
+        <div>ASIN: <%= item.amazon_asin.presence || '—' %></div>
+        <div>Zoho ID: <%= item.zoho_item_id.presence || '—' %></div>
+      </div>
+      <% if item.last_synced_at %>
+        <div style="margin-top:0.4rem;font-size:0.7rem;color:rgba(148,163,184,0.4);">Last synced: <%= item.last_synced_at.strftime('%d %b %Y %H:%M') %></div>
+      <% end %>
+    <% end %>
+  </div>
+
   <div style="margin-top:1.25rem;">
     <%= form.submit class: 'btn-primary-glow', style: 'cursor:pointer;' %>
   </div>
 <% end %>
+

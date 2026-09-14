@@ -7,7 +7,29 @@ class ItemsController < ApplicationController
     @total_cost = Item.sum('cost_price * quantity').round(2)
     @total_selling = Item.sum('selling_price * quantity').round(2)
     @total_profit = (@total_selling - @total_cost).round(2)
-    @items = Item.all.order(:id).reverse
+
+    # Unlisted counts for stat cards
+    @unlisted_counts = {
+      takealot:    Item.where(listed_on_takealot: false).count,
+      woocommerce: Item.where(listed_on_woocommerce: false).count,
+      amazon:      Item.where(listed_on_amazon: false).count,
+      zoho:        Item.where(listed_on_zoho: false).count
+    }
+
+    # Platform filter
+    @active_filter = params[:platform]
+    @items = case @active_filter
+             when 'takealot'    then Item.where(listed_on_takealot: false)
+             when 'woocommerce' then Item.where(listed_on_woocommerce: false)
+             when 'amazon'      then Item.where(listed_on_amazon: false)
+             when 'zoho'        then Item.where(listed_on_zoho: false)
+             else Item.all
+             end
+    @items = @items.order(id: :desc)
+
+    # Last sync time and platform sync service statuses
+    @last_synced_at = Item.maximum(:last_synced_at)
+    @platform_statuses = PlatformSetting.all_statuses
     # @items = Item.where('quantity > ?', 0).order(Arel.sql('cost_price * quantity DESC'))
   end
 
@@ -222,6 +244,68 @@ class ItemsController < ApplicationController
     end
   end
 
+  # ============================================================================
+  # POST /items/sync_platform
+  #
+  # Triggers a background sync job for one or all platforms.
+  # Params:
+  #   - platform: 'takealot' | 'woocommerce' | 'amazon' | 'all' (default: 'all')
+  # ============================================================================
+  def sync_platform
+    # Step 1: Sanitize and validate target platform name
+    requested_platform = params[:platform].to_s.downcase.presence || 'all'
+    allowed_platforms  = SyncPlatformStockJob::PLATFORM_SERVICES.keys + ['all']
+    platform           = allowed_platforms.include?(requested_platform) ? requested_platform : 'all'
+
+    # Step 2: Guard check - if targeting a specific platform that is disabled, alert the user
+    if platform != 'all' && !PlatformSetting.enabled?(platform)
+      label = platform.capitalize
+      respond_to do |format|
+        format.html { redirect_to items_url, alert: "#{label} sync service is currently disabled. Please enable it using the toggle first." }
+        format.json { render json: { error: "#{label} sync service is disabled" }, status: :unprocessable_entity }
+      end
+      return
+    end
+
+    # Step 3: Enqueue the background sync job via Sidekiq
+    SyncPlatformStockJob.perform_later(platform)
+
+    # Step 4: Respond to browser (redirect) or API caller (JSON)
+    label = platform == 'all' ? 'all platforms' : platform.capitalize
+    respond_to do |format|
+      format.html { redirect_to items_url, notice: "Sync started for #{label}. Check back in a moment." }
+      format.json { render json: { status: 'queued', platform: platform } }
+    end
+  end
+
+  # ============================================================================
+  # POST /items/toggle_platform_sync
+  #
+  # Toggles the enabled/disabled state of a platform sync service.
+  # Params:
+  #   - platform: 'takealot' | 'woocommerce' | 'amazon' | 'zoho'
+  # ============================================================================
+  def toggle_platform_sync
+    # Step 1: Sanitize target platform
+    platform = params[:platform].to_s.downcase.strip
+
+    # Step 2: Toggle status in PlatformSetting
+    new_state = PlatformSetting.toggle!(platform)
+    label = platform.capitalize
+    status_text = new_state ? 'enabled' : 'disabled'
+
+    # Step 3: Respond with notice
+    respond_to do |format|
+      format.html { redirect_to items_url, notice: "#{label} sync service #{status_text}." }
+      format.json { render json: { success: true, platform: platform, enabled: new_state } }
+    end
+  rescue StandardError => e
+    respond_to do |format|
+      format.html { redirect_to items_url, alert: "Failed to toggle #{platform} sync: #{e.message}" }
+      format.json { render json: { error: e.message }, status: :unprocessable_entity }
+    end
+  end
+
   private
 
   # Use callbacks to share common setup or constraints between actions.
@@ -231,12 +315,20 @@ class ItemsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def item_params
-    params.require(:item).permit(:name, :description, :condition, :quantity, :external_stock, :cost_price,
-                                 :selling_price, :image, :category, :original_price, :takealot_url, :barcode)
+    params.require(:item).permit(
+      :name, :description, :condition, :quantity, :external_stock, :cost_price,
+      :selling_price, :image, :category, :original_price, :takealot_url, :barcode,
+      :listed_on_takealot, :listed_on_woocommerce, :listed_on_amazon, :listed_on_zoho,
+      :takealot_offer_id, :woocommerce_product_id, :amazon_asin, :zoho_item_id, :zoho_stock
+    )
   end
 
   def mobile_scan_params
-    params.require(:item).permit(:name, :description, :condition, :quantity, :external_stock, :cost_price,
-                                 :selling_price, :image, :category, :original_price, :takealot_url, :barcode)
+    params.require(:item).permit(
+      :name, :description, :condition, :quantity, :external_stock, :cost_price,
+      :selling_price, :image, :category, :original_price, :takealot_url, :barcode,
+      :listed_on_takealot, :listed_on_woocommerce, :listed_on_amazon, :listed_on_zoho,
+      :takealot_offer_id, :woocommerce_product_id, :amazon_asin, :zoho_item_id, :zoho_stock
+    )
   end
 end

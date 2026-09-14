@@ -71,6 +71,7 @@ group :test do
   gem 'capybara'
   gem 'selenium-webdriver'
   gem 'webdrivers'
+  gem 'drb'
 end
 
 gem 'cloudinary'
@@ -80,4 +81,6 @@ gem 'htmlbeautifier'
 gem 'httparty'
 gem 'mini_magick'
 gem 'mutex_m'
+gem 'sidekiq'
+gem 'sidekiq-cron'
 gem 'tailwindcss-rails', '~> 2.3'

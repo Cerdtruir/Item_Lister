@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_05_04_121133) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_14_212000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -30,7 +30,28 @@ ActiveRecord::Schema[7.0].define(version: 2026_05_04_121133) do
     t.boolean "takealot_condition"
     t.string "takealot_url"
     t.string "barcode"
+    t.boolean "listed_on_takealot", default: false, null: false
+    t.boolean "listed_on_woocommerce", default: false, null: false
+    t.boolean "listed_on_amazon", default: false, null: false
+    t.string "takealot_offer_id"
+    t.string "woocommerce_product_id"
+    t.string "amazon_asin"
+    t.integer "takealot_stock"
+    t.integer "woocommerce_stock"
+    t.integer "amazon_stock"
+    t.datetime "last_synced_at"
+    t.boolean "listed_on_zoho", default: false, null: false
+    t.string "zoho_item_id"
+    t.integer "zoho_stock"
     t.index ["barcode"], name: "index_items_on_barcode", unique: true
+  end
+
+  create_table "platform_settings", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "enabled", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_platform_settings_on_name", unique: true
   end
 
 end

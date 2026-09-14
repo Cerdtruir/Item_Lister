@@ -2,13 +2,40 @@
   <!-- Page Header -->
   <div class="page-header">
     <h1 class="page-title">Inventory</h1>
-    <div style="display:flex;gap:0.5rem;">
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
       <%= form_with url: sync_images_items_path, method: :post, local: true, style: 'display:inline;' do %>
         <button type="submit" class="btn-secondary-glass btn-sm" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" onclick="this.innerHTML='<span class=\'spinner\' style=\'width:14px;height:14px;border-width:2px;margin:0;\'></span> Syncing...';this.disabled=true;this.form.submit();">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Sync Images
         </button>
       <% end %>
+
+      <!-- Platform Sync Controls (Action + Enable/Disable Toggle) -->
+      <% [
+           { id: 'takealot', name: 'Takealot', color: '#f59e0b' },
+           { id: 'woocommerce', name: 'WooCommerce', color: '#a78bfa' },
+           { id: 'amazon', name: 'Amazon', color: '#34d399' },
+           { id: 'zoho', name: 'Zoho', color: '#38bdf8' }
+         ].each do |p| %>
+        <% enabled = @platform_statuses ? @platform_statuses[p[:id]] : false %>
+        <div style="display:inline-flex;align-items:center;background:rgba(30,41,59,0.7);border:1px solid <%= enabled ? p[:color] : 'rgba(148,163,184,0.2)' %>;border-radius:8px;overflow:hidden;padding:2px 4px;gap:4px;">
+          <%= form_with url: sync_platform_items_path, method: :post, local: true, style: 'display:inline;' do |f| %>
+            <%= f.hidden_field :platform, value: p[:id] %>
+            <button type="submit" class="btn-sm" style="background:none;border:none;color:<%= p[:color] %>;display:inline-flex;align-items:center;gap:4px;cursor:pointer;padding:3px 6px;font-size:0.75rem;font-weight:600;" title="Run <%= p[:name] %> sync now">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <%= p[:name] %>
+            </button>
+          <% end %>
+
+          <%= form_with url: toggle_platform_sync_items_path, method: :post, local: true, style: 'display:inline;' do |f| %>
+            <%= f.hidden_field :platform, value: p[:id] %>
+            <button type="submit" style="background:<%= enabled ? '#10b981' : 'rgba(148,163,184,0.2)' %>;color:<%= enabled ? '#ffffff' : 'rgba(148,163,184,0.7)' %>;border:none;border-radius:4px;padding:2px 6px;font-size:0.65rem;font-weight:700;cursor:pointer;letter-spacing:0.04em;" title="<%= p[:name] %> auto-sync is <%= enabled ? 'ENABLED (click to disable)' : 'DISABLED (click to enable)' %>">
+              <%= enabled ? 'SYNC ON' : 'OFF' %>
+            </button>
+          <% end %>
+        </div>
+      <% end %>
+
       <a href="<%= new_item_path %>" class="btn-primary-glow btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add Item
@@ -16,9 +43,15 @@
     </div>
   </div>
 
+  <% if @last_synced_at %>
+    <div style="font-size:0.75rem;color:rgba(148,163,184,0.6);margin-bottom:0.5rem;text-align:right;">
+      Last synced: <%= @last_synced_at.strftime('%d %b %Y %H:%M') %>
+    </div>
+  <% end %>
+
   <!-- Stats -->
   <div class="stats-row">
-    <div class="stat-card">
+   <!-- <div class="stat-card">
       <div class="stat-label">Total Items</div>
       <div class="stat-value purple"><%= @total_items %></div>
     </div>
@@ -33,7 +66,33 @@
     <div class="stat-card">
       <div class="stat-label">Profit</div>
       <div class="stat-value blue">R<%= number_with_delimiter(@total_profit) %></div>
-    </div>
+    </div> -->
+    <!-- Platform unlisted stat cards -->
+    <a href="<%= items_path(platform: 'takealot') %>" class="stat-card" style="text-decoration:none;border-color:rgba(245,158,11,0.3);<%= @active_filter == 'takealot' ? 'background:rgba(245,158,11,0.15);' : '' %>">
+      <div class="stat-label" style="color:#f59e0b;">≠ Takealot</div>
+      <div class="stat-value amber"><%= @unlisted_counts[:takealot] %></div>
+    </a>
+    <a href="<%= items_path(platform: 'woocommerce') %>" class="stat-card" style="text-decoration:none;border-color:rgba(167,139,250,0.3);<%= @active_filter == 'woocommerce' ? 'background:rgba(167,139,250,0.15);' : '' %>">
+      <div class="stat-label" style="color:#a78bfa;">≠ WooCommerce</div>
+      <div class="stat-value purple"><%= @unlisted_counts[:woocommerce] %></div>
+    </a>
+    <a href="<%= items_path(platform: 'amazon') %>" class="stat-card" style="text-decoration:none;border-color:rgba(52,211,153,0.3);<%= @active_filter == 'amazon' ? 'background:rgba(52,211,153,0.15);' : '' %>">
+      <div class="stat-label" style="color:#34d399;">≠ Amazon</div>
+      <div class="stat-value green"><%= @unlisted_counts[:amazon] %></div>
+    </a>
+    <a href="<%= items_path(platform: 'zoho') %>" class="stat-card" style="text-decoration:none;border-color:rgba(56,189,248,0.3);<%= @active_filter == 'zoho' ? 'background:rgba(56,189,248,0.15);' : '' %>">
+      <div class="stat-label" style="color:#38bdf8;">≠ Zoho</div>
+      <div class="stat-value blue"><%= @unlisted_counts[:zoho] %></div>
+    </a>
+  </div>
+
+  <!-- Filter Pills -->
+  <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+    <a href="<%= items_path %>" class="filter-pill <%= @active_filter.nil? ? 'active' : '' %>" style="text-decoration:none;">All</a>
+    <a href="<%= items_path(platform: 'takealot') %>" class="filter-pill <%= @active_filter == 'takealot' ? 'active' : '' %>" style="text-decoration:none;--pill-color:#f59e0b;">≠ Takealot</a>
+    <a href="<%= items_path(platform: 'woocommerce') %>" class="filter-pill <%= @active_filter == 'woocommerce' ? 'active' : '' %>" style="text-decoration:none;--pill-color:#a78bfa;">≠ WooCommerce</a>
+    <a href="<%= items_path(platform: 'amazon') %>" class="filter-pill <%= @active_filter == 'amazon' ? 'active' : '' %>" style="text-decoration:none;--pill-color:#34d399;">≠ Amazon</a>
+    <a href="<%= items_path(platform: 'zoho') %>" class="filter-pill <%= @active_filter == 'zoho' ? 'active' : '' %>" style="text-decoration:none;--pill-color:#38bdf8;">≠ Zoho</a>
   </div>
 
   <!-- Search -->
@@ -55,6 +114,10 @@
           <th style="cursor:pointer;" onclick="sortTable(6, 'num')">Selling (R) <span class="sort-icon"></span></th>
           <th style="cursor:pointer;" onclick="sortTable(7, 'num')">Original (R) <span class="sort-icon"></span></th>
           <th style="cursor:pointer;" onclick="sortTable(8, 'str')">Condition <span class="sort-icon"></span></th>
+          <th style="width:36px;text-align:center;" title="Takealot listed / stock">T</th>
+          <th style="width:36px;text-align:center;" title="WooCommerce listed / stock">W</th>
+          <th style="width:36px;text-align:center;" title="Amazon listed / stock">A</th>
+          <th style="width:36px;text-align:center;" title="Zoho listed / stock">Z</th>
           <th style="width:110px;">Actions</th>
         </tr>
       </thead>
@@ -75,6 +138,49 @@
             <td class="view-cell"><%= item.selling_price %></td>
             <td class="view-cell"><%= item.original_price %></td>
             <td class="view-cell"><%= item.condition %></td>
+
+            <!-- Platform status badges -->
+            <td class="view-cell" style="text-align:center;padding:2px;">
+              <button class="platform-badge <%= item.listed_on_takealot ? 'listed' : 'unlisted' %>"
+                      onclick="togglePlatform(<%= item.id %>, 'takealot', this)"
+                      title="<%= item.listed_on_takealot ? "Listed on Takealot#{item.takealot_stock ? " (stock: #{item.takealot_stock})" : ''}" : 'Not listed on Takealot' %>">
+                <%= item.listed_on_takealot ? '✓' : '✗' %>
+                <% if item.takealot_stock %>
+                  <span class="badge-stock"><%= item.takealot_stock %></span>
+                <% end %>
+              </button>
+            </td>
+            <td class="view-cell" style="text-align:center;padding:2px;">
+              <button class="platform-badge <%= item.listed_on_woocommerce ? 'listed' : 'unlisted' %>"
+                      onclick="togglePlatform(<%= item.id %>, 'woocommerce', this)"
+                      title="<%= item.listed_on_woocommerce ? "Listed on WooCommerce#{item.woocommerce_stock ? " (stock: #{item.woocommerce_stock})" : ''}" : 'Not listed on WooCommerce' %>">
+                <%= item.listed_on_woocommerce ? '✓' : '✗' %>
+                <% if item.woocommerce_stock %>
+                  <span class="badge-stock"><%= item.woocommerce_stock %></span>
+                <% end %>
+              </button>
+            </td>
+            <td class="view-cell" style="text-align:center;padding:2px;">
+              <button class="platform-badge <%= item.listed_on_amazon ? 'listed' : 'unlisted' %>"
+                      onclick="togglePlatform(<%= item.id %>, 'amazon', this)"
+                      title="<%= item.listed_on_amazon ? "Listed on Amazon#{item.amazon_stock ? " (stock: #{item.amazon_stock})" : ''}" : 'Not listed on Amazon' %>">
+                <%= item.listed_on_amazon ? '✓' : '✗' %>
+                <% if item.amazon_stock %>
+                  <span class="badge-stock"><%= item.amazon_stock %></span>
+                <% end %>
+              </button>
+            </td>
+            <td class="view-cell" style="text-align:center;padding:2px;">
+              <button class="platform-badge <%= item.listed_on_zoho ? 'listed' : 'unlisted' %>"
+                      onclick="togglePlatform(<%= item.id %>, 'zoho', this)"
+                      title="<%= item.listed_on_zoho ? "Listed on Zoho#{item.zoho_stock ? " (stock: #{item.zoho_stock})" : ''}" : 'Not listed on Zoho' %>">
+                <%= item.listed_on_zoho ? '✓' : '✗' %>
+                <% if item.zoho_stock %>
+                  <span class="badge-stock"><%= item.zoho_stock %></span>
+                <% end %>
+              </button>
+            </td>
+
             <td class="view-cell">
               <div class="cell-actions">
                 <button class="btn-secondary-glass btn-icon" onclick="startEdit(<%= item.id %>)" title="Edit">
@@ -125,6 +231,10 @@
                 <% end %>
               </select>
             </td>
+            <!-- Platform badges placeholder in edit mode (read-only) -->
+            <td class="edit-cell" style="display:none;"></td>
+            <td class="edit-cell" style="display:none;"></td>
+            <td class="edit-cell" style="display:none;"></td>
             <td class="edit-cell" style="display:none;">
               <div class="cell-actions">
                 <button class="btn-success btn-icon" onclick="saveEdit(<%= item.id %>)" title="Save">
@@ -142,10 +252,92 @@
   </div>
 </div>
 
+<style>
+  .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid rgba(148,163,184,0.2);
+    color: rgba(148,163,184,0.8);
+    background: rgba(30,41,59,0.4);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .filter-pill:hover, .filter-pill.active {
+    border-color: var(--pill-color, rgba(99,102,241,0.6));
+    color: var(--pill-color, #818cf8);
+    background: rgba(99,102,241,0.08);
+  }
+  .platform-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .platform-badge.listed {
+    background: rgba(52,211,153,0.15);
+    color: #34d399;
+    border: 1px solid rgba(52,211,153,0.3);
+  }
+  .platform-badge.unlisted {
+    background: rgba(239,68,68,0.1);
+    color: rgba(248,113,113,0.7);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+  .platform-badge:hover { opacity: 0.75; transform: scale(0.95); }
+  .badge-stock {
+    font-size: 0.6rem;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-left: 1px;
+  }
+</style>
+
 <script>
   function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
   }
+
+  // ═══ Platform badge toggle (manual override) ═══
+  window.togglePlatform = function(id, platform, btn) {
+    const isListed = btn.classList.contains('listed');
+    const newVal   = !isListed;
+    const field    = 'listed_on_' + platform;
+
+    btn.style.opacity = '0.4';
+
+    fetch('/items/' + id + '.json', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken(),
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ item: { [field]: newVal } })
+    })
+    .then(res => { if (!res.ok) throw new Error('Update failed'); return res.json(); })
+    .then(() => {
+      btn.classList.toggle('listed', newVal);
+      btn.classList.toggle('unlisted', !newVal);
+      btn.childNodes[0].textContent = newVal ? '✓' : '✗';
+      btn.style.opacity = '1';
+      window.showTableToast(platform.charAt(0).toUpperCase() + platform.slice(1) + ' status updated', 'success');
+    })
+    .catch(err => {
+      btn.style.opacity = '1';
+      window.showTableToast('Failed: ' + err.message, 'error');
+    });
+  };
 
   // ═══ Inline Edit ═══
   window.startEdit = function(id) {
@@ -153,7 +345,6 @@
     row.classList.add('editing');
     row.querySelectorAll('.view-cell').forEach(c => c.style.display = 'none');
     row.querySelectorAll('.edit-cell').forEach(c => c.style.display = '');
-    // Focus first input
     const firstInput = row.querySelector('.edit-input');
     if (firstInput) firstInput.focus();
   };
@@ -189,9 +380,7 @@
       return res.json();
     })
     .then(item => {
-      // Update view cells with new values
       const viewCells = row.querySelectorAll('.view-cell');
-      // cells: id, img, name, category, qty, cost, selling, original, condition, actions
       viewCells[2].querySelector('.cell-name').textContent = data.item.name || '';
       viewCells[3].textContent = data.item.category || '';
       viewCells[4].textContent = data.item.quantity || '';
@@ -244,33 +433,25 @@
     const table = document.getElementById("items-table");
     const tbody = document.getElementById("items-tbody");
     const rows = Array.from(tbody.querySelectorAll("tr"));
-    
-    // Toggle direction
+
     window.sortDir[n] = !window.sortDir[n];
     const isAsc = window.sortDir[n];
 
-    // Reset all icons
     table.querySelectorAll("th .sort-icon").forEach(icon => icon.textContent = "");
-    // Set current icon
     const currentIcon = table.querySelectorAll("th")[n].querySelector(".sort-icon");
-    if (currentIcon) {
-      currentIcon.textContent = isAsc ? " ▲" : " ▼";
-    }
+    if (currentIcon) currentIcon.textContent = isAsc ? " ▲" : " ▼";
 
     rows.sort((rowA, rowB) => {
       let cellA = rowA.querySelectorAll("td.view-cell")[n].textContent.trim();
       let cellB = rowB.querySelectorAll("td.view-cell")[n].textContent.trim();
-      
+
       if (type === 'num') {
-        let valA = parseFloat(cellA) || 0;
-        let valB = parseFloat(cellB) || 0;
-        return isAsc ? valA - valB : valB - valA;
+        return isAsc ? (parseFloat(cellA)||0) - (parseFloat(cellB)||0) : (parseFloat(cellB)||0) - (parseFloat(cellA)||0);
       } else {
         return isAsc ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
       }
     });
 
-    // Re-append rows in new order
     rows.forEach(row => tbody.appendChild(row));
   };
 

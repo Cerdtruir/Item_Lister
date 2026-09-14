@@ -12,6 +12,8 @@ Rails.application.routes.draw do
       get 'google_scan'
       post 'lookup_google'
       post 'sync_images'
+      post 'sync_platform'
+      post 'toggle_platform_sync'
     end
     member do
       post 'reupload_image'
