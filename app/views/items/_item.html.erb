@@ -53,6 +53,12 @@
         </a>
       </div>
     </div>
+    <% if item.notes.present? %>
+      <div class="border-t pt-4">
+        <span class="text-sm font-semibold text-gray-600">Notes</span>
+        <p class="text-gray-700 text-sm whitespace-pre-wrap mt-1"><%= item.notes %></p>
+      </div>
+    <% end %>
     <% if action_name != "show" %>
       <div class="flex space-x-2 border-t pt-4">
         <%= link_to 'Show Details', item, 

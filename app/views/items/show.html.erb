@@ -62,6 +62,15 @@
       </div>
     <% end %>
 
+    <div class="detail-field" style="margin-top:0.5rem;">
+      <span class="field-label">Notes</span>
+      <% if @item.notes.present? %>
+        <div class="field-value" style="font-size:0.875rem;line-height:1.5;color:rgba(226,224,240,0.85);white-space:pre-wrap;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:0.5rem;padding:0.75rem;"><%= @item.notes %></div>
+      <% else %>
+        <span class="field-value" style="color:rgba(226,224,240,0.4);font-size:0.875rem;">—</span>
+      <% end %>
+    </div>
+
     <!-- Actions -->
     <div class="detail-actions">
       <%= link_to 'Edit', edit_item_path(@item), class: 'btn-primary-glow btn-sm', style: 'text-decoration:none;text-align:center;' %>

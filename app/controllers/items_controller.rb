@@ -316,7 +316,7 @@ class ItemsController < ApplicationController
   # Only allow a list of trusted parameters through.
   def item_params
     params.require(:item).permit(
-      :name, :description, :condition, :quantity, :external_stock, :cost_price,
+      :name, :description, :notes, :condition, :quantity, :external_stock, :cost_price,
       :selling_price, :image, :category, :original_price, :takealot_url, :barcode,
       :listed_on_takealot, :listed_on_woocommerce, :listed_on_amazon, :listed_on_zoho,
       :takealot_offer_id, :woocommerce_product_id, :amazon_asin, :zoho_item_id, :zoho_stock
@@ -325,7 +325,7 @@ class ItemsController < ApplicationController
 
   def mobile_scan_params
     params.require(:item).permit(
-      :name, :description, :condition, :quantity, :external_stock, :cost_price,
+      :name, :description, :notes, :condition, :quantity, :external_stock, :cost_price,
       :selling_price, :image, :category, :original_price, :takealot_url, :barcode,
       :listed_on_takealot, :listed_on_woocommerce, :listed_on_amazon, :listed_on_zoho,
       :takealot_offer_id, :woocommerce_product_id, :amazon_asin, :zoho_item_id, :zoho_stock

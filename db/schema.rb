@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_14_212000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_16_154210) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -43,6 +43,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_14_212000) do
     t.boolean "listed_on_zoho", default: false, null: false
     t.string "zoho_item_id"
     t.integer "zoho_stock"
+    t.text "notes"
     t.index ["barcode"], name: "index_items_on_barcode", unique: true
   end
 

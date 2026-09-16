@@ -59,6 +59,11 @@
   </div>
 
   <div class="detail-field">
+    <label class="input-label" for="item_notes">Notes</label>
+    <%= form.text_area :notes, rows: 3, class: 'input-glow', id: 'item_notes', placeholder: 'Add internal notes, supplier info, condition details, or reminders...', style: 'resize:vertical;' %>
+  </div>
+
+  <div class="detail-field">
     <label class="input-label" for="item_takealot_url">Takealot URL</label>
     <%= form.text_field :takealot_url, class: 'input-glow', id: 'item_takealot_url' %>
   </div>
