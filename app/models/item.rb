@@ -1,5 +1,10 @@
 class Item < ApplicationRecord
-  validates :barcode, uniqueness: true, allow_nil: true, allow_blank: true
+  # Callbacks to manage fallback barcode assignment
+  before_validation :normalize_blank_barcode
+  before_save :assign_id_if_persisted, if: -> { barcode.blank? && id.present? }
+  after_create :set_id_as_barcode, if: -> { barcode.blank? }
+
+  validates :barcode, uniqueness: true, allow_nil: true
 
   CATEGORIES = [
     'Baby & Toddler',
@@ -66,5 +71,24 @@ class Item < ApplicationRecord
     img.write("public/assets/#{id}.jpg")
     Cloudinary::Uploader.upload("public/assets/#{id}.jpg",
                                 public_id: id)
+  end
+
+  private
+
+  # STEP 1: Normalize blank barcode strings (e.g., "" submitted from forms) to nil
+  # This prevents PostgreSQL unique index violations ("Key (barcode)=() already exists")
+  def normalize_blank_barcode
+    self.barcode = barcode.presence
+  end
+
+  # STEP 2: If an existing persisted record has its barcode cleared, default to its ID
+  def assign_id_if_persisted
+    self.barcode = id.to_s
+  end
+
+  # STEP 3: For newly created records without a barcode, assign the database ID as barcode
+  def set_id_as_barcode
+    update_column(:barcode, id.to_s)
+    self.barcode = id.to_s
   end
 end
