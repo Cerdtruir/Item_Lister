@@ -38,6 +38,21 @@ class Item < ApplicationRecord
   attr_accessor :image_file
 
   # ============================================================================
+  # Graceful fallback accessors for environments where migration
+  # 20260916154210_add_notes_to_items has not yet been executed in production.
+  # When the 'notes' column exists in the database table, ActiveRecord's column
+  # getter and setter are called via super. If the column does not yet exist,
+  # it falls back to an instance variable rather than raising UnknownAttributeError.
+  # ============================================================================
+  def notes
+    has_attribute?(:notes) ? super : @notes
+  end
+
+  def notes=(value)
+    has_attribute?(:notes) ? super : (@notes = value)
+  end
+
+  # ============================================================================
   # Purpose: Downloads a remote image URL, converts to JPG with a white
   #          background, and uploads it to Cloudinary with public_id = item.id.
   #
