@@ -75,7 +75,12 @@
 
   <div class="detail-field">
     <label class="input-label" for="item_image">Image URL</label>
-    <%= form.text_field :image, class: 'input-glow', id: 'item_image' %>
+    <%= form.text_field :image, class: 'input-glow', id: 'item_image', placeholder: 'https://example.com/product-image.jpg' %>
+  </div>
+
+  <div class="detail-field">
+    <label class="input-label" for="item_image_file">Or Upload Image File</label>
+    <%= form.file_field :image_file, class: 'input-glow', id: 'item_image_file', accept: 'image/*', style: 'padding:0.4rem;' %>
   </div>
 
   <!-- Platform Listing Status -->

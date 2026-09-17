@@ -45,15 +45,36 @@ class ItemsController < ApplicationController
   # GET /items/1/edit
   def edit; end
 
+  # ============================================================================
   # POST /items or /items.json
+  #
+  # Creates a new inventory item and uploads its image (from file or URL) to Cloudinary.
+  #
+  # Execution Flow:
+  #   STEP 1: Initialize Item with permitted parameters
+  #   STEP 2: Persist item to database
+  #   STEP 3: Process and upload image to Cloudinary (file upload or remote URL)
+  #   STEP 4: Respond with HTML redirect or JSON representation
+  # ============================================================================
   def create
+    # STEP 1: Initialize record
     @item = Item.new(item_params)
 
     respond_to do |format|
       if @item.save
+        # STEP 2: Upload image to Cloudinary in isolated block
+        begin
+          uploaded_file = params.dig(:item, :image_file)
+          @item.upload_to_cloudinary(file: uploaded_file)
+        rescue StandardError => e
+          Rails.logger.error("Failed Cloudinary upload on item create ##{@item.id}: #{e.message}")
+        end
+
+        # STEP 3: Respond with success
         format.html { redirect_to item_url(@item), notice: 'Item was successfully created.' }
         format.json { render :show, status: :created, location: @item }
       else
+        # STEP 4: Render validation errors
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @item.errors, status: :unprocessable_entity }
       end
@@ -83,43 +104,29 @@ class ItemsController < ApplicationController
     end
   end
 
+  # ============================================================================
+  # POST /items/create_from_takealot
+  #
+  # Creates an item using metadata scraped from a Takealot product link.
+  #
+  # Execution Flow:
+  #   STEP 1: Validate Takealot link parameter presence
+  #   STEP 2: Fetch product details via TakealotService
+  #   STEP 3: Instantiate and save new Item record
+  #   STEP 4: Upload scraped product image to Cloudinary
+  #   STEP 5: Redirect to item edit page or re-render form
+  # ============================================================================
   def create_from_takealot
     takealot_link = params[:takealot_link]
 
-    if takealot_link.present?
-      data = TakealotService.new(takealot_link).fetch_data
-
-      @item = Item.new(
-        name: data[:name],
-        description: data[:description],
-        category: data[:category],
-        selling_price: data[:selling_price],
-        image: data[:image],
-        original_price: data[:original_price],
-        takealot_url: data[:takealot_url]
-      )
-
-      if @item.save
-        redirect_to edit_item_path(@item), notice: 'Item was successfully created from Takealot link.'
-      else
-        render :new_takealot_item_form
-      end
-    else
-      redirect_to new_takealot_item_form_path, alert: 'Takealot link cannot be blank.'
+    if takealot_link.blank?
+      return redirect_to new_takealot_item_form_path, alert: 'Takealot link cannot be blank.'
     end
 
-    @item.upload_image(@item)
-  end
+    # STEP 1: Scrape Takealot data
+    data = TakealotService.new(takealot_link).fetch_data
 
-  def create_from_barcode
-    barcode = params[:barcode]
-
-    return unless barcode.present?
-
-    data = TakealotBarcodeService.new(barcode).fetch_item_data
-
-    return redirect_to new_item_path(item: { barcode: barcode }), alert: data[:error] if data[:error]
-
+    # STEP 2: Initialize item
     @item = Item.new(
       name: data[:name],
       description: data[:description],
@@ -130,9 +137,62 @@ class ItemsController < ApplicationController
       takealot_url: data[:takealot_url]
     )
 
-    @item.save!
-    @item.upload_image(@item)
-    redirect_to edit_item_path(@item), notice: 'Item was successfully created from barcode.'
+    # STEP 3: Save item and upload image to Cloudinary
+    if @item.save
+      begin
+        @item.upload_image(@item) if @item.image.present?
+      rescue StandardError => e
+        Rails.logger.error("Failed Cloudinary upload for Takealot item ##{@item.id}: #{e.message}")
+      end
+      redirect_to edit_item_path(@item), notice: 'Item was successfully created from Takealot link.'
+    else
+      render :new_takealot_item_form
+    end
+  end
+
+  # ============================================================================
+  # POST /items/create_from_barcode
+  #
+  # Creates an item using barcode metadata lookup from Takealot.
+  #
+  # Execution Flow:
+  #   STEP 1: Validate barcode presence
+  #   STEP 2: Fetch item data via TakealotBarcodeService
+  #   STEP 3: Instantiate and save new Item record
+  #   STEP 4: Upload item image to Cloudinary
+  #   STEP 5: Redirect to edit page
+  # ============================================================================
+  def create_from_barcode
+    barcode = params[:barcode]
+    return unless barcode.present?
+
+    # STEP 1: Fetch item data
+    data = TakealotBarcodeService.new(barcode).fetch_item_data
+    return redirect_to new_item_path(item: { barcode: barcode }), alert: data[:error] if data[:error]
+
+    # STEP 2: Initialize item
+    @item = Item.new(
+      name: data[:name],
+      description: data[:description],
+      category: data[:category],
+      selling_price: data[:selling_price],
+      image: data[:image],
+      original_price: data[:original_price],
+      takealot_url: data[:takealot_url],
+      barcode: barcode
+    )
+
+    # STEP 3: Save item and upload image
+    if @item.save
+      begin
+        @item.upload_image(@item) if @item.image.present?
+      rescue StandardError => e
+        Rails.logger.error("Failed Cloudinary upload for barcode item ##{@item.id}: #{e.message}")
+      end
+      redirect_to edit_item_path(@item), notice: 'Item was successfully created from barcode.'
+    else
+      redirect_to new_item_path(item: { barcode: barcode }), alert: @item.errors.full_messages.join(', ')
+    end
   end
 
   def mobile_scan
@@ -195,12 +255,32 @@ class ItemsController < ApplicationController
     render json: { error: "Failed to fetch product data: #{e.message}" }, status: :internal_server_error
   end
 
+  # ============================================================================
+  # POST /items/create_from_mobile_scan
+  #
+  # Creates an item from mobile scanner input and uploads its image to Cloudinary.
+  #
+  # Execution Flow:
+  #   STEP 1: Initialize Item with mobile scan parameters
+  #   STEP 2: Persist item to database
+  #   STEP 3: Process and upload image to Cloudinary in isolated block
+  #   STEP 4: Respond with JSON containing item and redirect URL
+  # ============================================================================
   def create_from_mobile_scan
+    # STEP 1: Initialize record
     @item = Item.new(mobile_scan_params)
 
+    # STEP 2: Persist record
     if @item.save
-      # Upload image to Cloudinary in background-safe way
-      @item.upload_image(@item) if @item.image.present?
+      # STEP 3: Upload image to Cloudinary (file or URL) in isolated block
+      begin
+        uploaded_file = params.dig(:item, :image_file)
+        @item.upload_to_cloudinary(file: uploaded_file)
+      rescue StandardError => e
+        Rails.logger.error("Failed Cloudinary upload for mobile scan item ##{@item.id}: #{e.message}")
+      end
+
+      # STEP 4: Render JSON success response
       render json: { item: @item, redirect_url: edit_item_path(@item) }, status: :created
     else
       render json: { errors: @item.errors.full_messages }, status: :unprocessable_entity
@@ -317,7 +397,7 @@ class ItemsController < ApplicationController
   def item_params
     params.require(:item).permit(
       :name, :description, :notes, :condition, :quantity, :external_stock, :cost_price,
-      :selling_price, :image, :category, :original_price, :takealot_url, :barcode,
+      :selling_price, :image, :image_file, :category, :original_price, :takealot_url, :barcode,
       :listed_on_takealot, :listed_on_woocommerce, :listed_on_amazon, :listed_on_zoho,
       :takealot_offer_id, :woocommerce_product_id, :amazon_asin, :zoho_item_id, :zoho_stock
     )
@@ -326,7 +406,7 @@ class ItemsController < ApplicationController
   def mobile_scan_params
     params.require(:item).permit(
       :name, :description, :notes, :condition, :quantity, :external_stock, :cost_price,
-      :selling_price, :image, :category, :original_price, :takealot_url, :barcode,
+      :selling_price, :image, :image_file, :category, :original_price, :takealot_url, :barcode,
       :listed_on_takealot, :listed_on_woocommerce, :listed_on_amazon, :listed_on_zoho,
       :takealot_offer_id, :woocommerce_product_id, :amazon_asin, :zoho_item_id, :zoho_stock
     )
