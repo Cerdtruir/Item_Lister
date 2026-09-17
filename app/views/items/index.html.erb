@@ -198,7 +198,7 @@
             <!-- Edit mode (hidden by default) -->
             <td class="edit-cell" style="display:none;"><%= item.id %></td>
             <td class="edit-cell" style="display:none;">
-              <img src="/assets/<%= item.id %>.jpg" class="cell-img" onerror="this.style.display='none'" alt="">
+              <img src="https://res.cloudinary.com/dwi7jdore/image/upload/<%= item.id %>.jpg" class="cell-img" onerror="this.style.display='none'" alt="">
             </td>
             <td class="edit-cell" style="display:none;">
               <input type="text" class="edit-input" data-field="name" value="<%= item.name %>">
@@ -231,7 +231,8 @@
                 <% end %>
               </select>
             </td>
-            <!-- Platform badges placeholder in edit mode (read-only) -->
+            <!-- Platform badges placeholder in edit mode (read-only: T, W, A, Z) -->
+            <td class="edit-cell" style="display:none;"></td>
             <td class="edit-cell" style="display:none;"></td>
             <td class="edit-cell" style="display:none;"></td>
             <td class="edit-cell" style="display:none;"></td>
@@ -339,33 +340,83 @@
     });
   };
 
+  // Tick checkmark icon SVG for inline edit save button
+  const TICK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
   // ═══ Inline Edit ═══
+  // Purpose: Switch a table row from view mode to inline editing mode.
+  // Execution Flow:
+  //   STEP 1: Find target row and toggle display states between view cells and edit cells.
+  //   STEP 2: Reset the save button state (ensure tick icon is visible and button is enabled).
+  //   STEP 3: Auto-focus the first editable input.
   window.startEdit = function(id) {
     const row = document.getElementById('item-row-' + id);
+    if (!row) return;
+
+    // STEP 1: Toggle row display state
     row.classList.add('editing');
     row.querySelectorAll('.view-cell').forEach(c => c.style.display = 'none');
     row.querySelectorAll('.edit-cell').forEach(c => c.style.display = '');
+
+    // STEP 2: Ensure save button displays tick icon and is enabled
+    const saveBtn = row.querySelector('.btn-success');
+    if (saveBtn) {
+      saveBtn.innerHTML = TICK_SVG;
+      saveBtn.disabled = false;
+    }
+
+    // STEP 3: Auto-focus first input field
     const firstInput = row.querySelector('.edit-input');
     if (firstInput) firstInput.focus();
   };
 
+  // Purpose: Discard inline edits and return the row to view mode.
+  // Execution Flow:
+  //   STEP 1: Hide edit cells and restore view cells.
+  //   STEP 2: Restore the save button to the tick checkmark and enable it.
   window.cancelEdit = function(id) {
     const row = document.getElementById('item-row-' + id);
+    if (!row) return;
+
+    // STEP 1: Hide edit cells and show view cells
     row.classList.remove('editing');
     row.querySelectorAll('.view-cell').forEach(c => c.style.display = '');
     row.querySelectorAll('.edit-cell').forEach(c => c.style.display = 'none');
+
+    // STEP 2: Restore save button state
+    const saveBtn = row.querySelector('.btn-success');
+    if (saveBtn) {
+      saveBtn.innerHTML = TICK_SVG;
+      saveBtn.disabled = false;
+    }
   };
 
+  // Purpose: Persist inline row edits to the backend via PATCH and update the UI.
+  // Execution Flow:
+  //   STEP 1: Collect edited values from the input fields.
+  //   STEP 2: Swap the tick checkmark with an updating circle (spinner) and disable button to prevent double-submit.
+  //   STEP 3: Send PATCH request to Rails backend (/items/:id.json).
+  //   STEP 4: Update the table's view-cell elements with the newly saved values.
+  //   STEP 5: Restore the updating circle back to the tick checkmark and re-enable button.
+  //   STEP 6: Close edit mode after briefly displaying the restored tick, and show success toast.
+  //   STEP 7: If save fails, restore tick icon, re-enable button, and display error toast.
   window.saveEdit = function(id) {
     const row = document.getElementById('item-row-' + id);
+    if (!row) return;
+
+    // STEP 1: Collect input values
     const inputs = row.querySelectorAll('.edit-input');
     const data = { item: {} };
     inputs.forEach(inp => { data.item[inp.dataset.field] = inp.value; });
 
+    // STEP 2: Change tick icon to updating circle (spinner) and disable button
     const saveBtn = row.querySelector('.btn-success');
-    saveBtn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0;"></span>';
-    saveBtn.disabled = true;
+    if (saveBtn) {
+      saveBtn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0;"></span>';
+      saveBtn.disabled = true;
+    }
 
+    // STEP 3: Dispatch PATCH request
     fetch('/items/' + id + '.json', {
       method: 'PATCH',
       headers: {
@@ -380,21 +431,47 @@
       return res.json();
     })
     .then(item => {
+      // STEP 4: Update view cells in DOM
       const viewCells = row.querySelectorAll('.view-cell');
-      viewCells[2].querySelector('.cell-name').textContent = data.item.name || '';
-      viewCells[3].textContent = data.item.category || '';
-      viewCells[4].textContent = data.item.quantity || '';
-      viewCells[5].textContent = data.item.cost_price || '';
-      viewCells[6].textContent = data.item.selling_price || '';
-      viewCells[7].textContent = data.item.original_price || '';
-      viewCells[8].textContent = data.item.condition || '';
-      window.cancelEdit(id);
+      if (viewCells[2]) {
+        const nameEl = viewCells[2].querySelector('.cell-name');
+        if (nameEl) {
+          nameEl.textContent = data.item.name || '';
+          nameEl.title = data.item.name || '';
+        }
+      }
+      if (viewCells[3]) viewCells[3].textContent = data.item.category || '';
+      if (viewCells[4]) viewCells[4].textContent = data.item.quantity || '';
+      if (viewCells[5]) viewCells[5].textContent = data.item.cost_price || '';
+      if (viewCells[6]) viewCells[6].textContent = data.item.selling_price || '';
+      if (viewCells[7]) viewCells[7].textContent = data.item.original_price || '';
+      if (viewCells[8]) viewCells[8].textContent = data.item.condition || '';
+
+      // Update row data attribute for search filtering
+      if (data.item.name) {
+        row.dataset.name = data.item.name.toLowerCase();
+      }
+
+      // STEP 5: Change updating circle (spinner) back to the tick icon
+      if (saveBtn) {
+        saveBtn.innerHTML = TICK_SVG;
+        saveBtn.disabled = false;
+      }
+
+      // STEP 6: Close edit mode after briefly displaying the restored tick, and display toast
+      setTimeout(() => {
+        window.cancelEdit(id);
+      }, 400);
+
       window.showTableToast('Item updated!', 'success');
     })
     .catch(err => {
+      // STEP 7: Restore tick icon and display error toast
+      if (saveBtn) {
+        saveBtn.innerHTML = TICK_SVG;
+        saveBtn.disabled = false;
+      }
       window.showTableToast('Failed to save: ' + err.message, 'error');
-      saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      saveBtn.disabled = false;
     });
   };
 
